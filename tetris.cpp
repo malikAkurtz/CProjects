@@ -19,7 +19,7 @@
 using namespace std;
 
 const int SCREEN_HEIGHT = 700;
-const int SCREEN_WIDTH = 500;
+const int SCREEN_WIDTH = 480;
 
 bool gameRunning = false;
 
@@ -30,6 +30,8 @@ void spawnSingleCube();
 vector<Shape*> shapesOnBoard;
 
 Shape *fallingShape;
+
+int SHAPE_BLOCK_SIZE = 30;
 
 
 
@@ -47,7 +49,7 @@ class Shape {
 class SingleCube : public Shape {
     public:
     SingleCube(float x, float y) {
-        sf::RectangleShape oneCube(sf::Vector2f(30, 30));
+        sf::RectangleShape oneCube(sf::Vector2f(SHAPE_BLOCK_SIZE, SHAPE_BLOCK_SIZE));
         oneCube.setFillColor(sf::Color(100, 250, 50));
         sf::Vector2f initialpos(x, y);
         oneCube.setPosition(initialpos);
@@ -105,7 +107,7 @@ void gameLogic(sf::Keyboard::Key &keypress) {
             // so long as the part is not at the bottom of the screen 
             if (part.getGlobalBounds().getPosition().y < SCREEN_HEIGHT - part.getGlobalBounds().height) {
                 // move the part down
-                part.move(0,0.05);
+                part.move(0,0.03);
             }
             else {
                 fallingShape->isFalling = false;
@@ -135,13 +137,19 @@ void gameLogic(sf::Keyboard::Key &keypress) {
     if (keypress == sf::Keyboard::Left) {
         cout << "left" << endl;
         for (auto &part : fallingShape->parts) {
-            part.move(-12.0, 0.0);
+            if (part.getGlobalBounds().left > 0) {
+                part.move(-30.0, 0.0);
+            }
+            
         }
     }
     else if (keypress == sf::Keyboard::Right) {
         cout << "right" << endl;
         for (auto &part : fallingShape->parts) {
-            part.move(12.0, 0.0);
+            if ((part.getGlobalBounds().left+part.getGlobalBounds().width) < SCREEN_WIDTH) {
+                part.move(30.0, 0.0);
+            }
+            
         }
     }
 
