@@ -45,7 +45,6 @@ class Shape {
 };
 
 
-
 class SingleCube : public Shape {
     public:
     SingleCube(float x, float y) {
@@ -54,6 +53,35 @@ class SingleCube : public Shape {
         sf::Vector2f initialpos(x, y);
         oneCube.setPosition(initialpos);
         parts.push_back(oneCube);
+        //shapesOnBoard.push_back(this);
+        isFalling = true;
+    }
+};
+
+class Rectangle : public Shape {
+    public:
+    Rectangle(float x, float y) {
+        sf::RectangleShape firstCube(sf::Vector2f(SHAPE_BLOCK_SIZE, SHAPE_BLOCK_SIZE));
+        firstCube.setFillColor(sf::Color(100, 250, 50));
+        firstCube.setPosition(sf::Vector2f(x+SHAPE_BLOCK_SIZE, y));
+        parts.push_back(firstCube);
+            
+        sf::RectangleShape  secondCube(sf::Vector2f(SHAPE_BLOCK_SIZE, SHAPE_BLOCK_SIZE));
+        secondCube.setFillColor(sf::Color(100, 250, 50));
+        secondCube.setPosition(sf::Vector2f(x - SHAPE_BLOCK_SIZE, y));
+        parts.push_back(secondCube);
+
+        sf::RectangleShape thirdCube(sf::Vector2f(SHAPE_BLOCK_SIZE, SHAPE_BLOCK_SIZE));
+        thirdCube.setFillColor(sf::Color(100, 250, 50));
+        thirdCube.setPosition(sf::Vector2f(x+(SHAPE_BLOCK_SIZE*2), y));
+        parts.push_back(thirdCube);
+
+        sf::RectangleShape fourthCube(sf::Vector2f(SHAPE_BLOCK_SIZE, SHAPE_BLOCK_SIZE));
+        fourthCube.setFillColor(sf::Color(100, 250, 50));
+        fourthCube.setPosition(sf::Vector2f(x, y));
+        parts.push_back(fourthCube);
+
+
         shapesOnBoard.push_back(this);
         isFalling = true;
     }
@@ -94,6 +122,12 @@ void spawnSingleCube() {
 }
 
 
+void spawnRectangle() {
+    Rectangle *newRectangle = new Rectangle(SCREEN_WIDTH/2, 0.0);
+    shapesOnBoard.push_back(newRectangle);
+}
+
+
 
 void gameLogic(sf::Keyboard::Key &keypress) {
 
@@ -128,7 +162,7 @@ void gameLogic(sf::Keyboard::Key &keypress) {
         }
 
         if (!fallingShape->isFalling) {
-            spawnSingleCube();
+            spawnRectangle();
         }        
     }
     
