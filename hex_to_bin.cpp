@@ -27,6 +27,7 @@ std::string hexToBinary(const std::string& hex_encoding) {
     // for every character in the string
     for (int i = 0; i < hex_encoding.length(); i++){
         char curChar = hex_encoding[i];
+        string binRep;
         // if the character at index i is an integer
         if (isdigit(curChar)) {
             cout << "-----------------------------------------------------------" << endl;
@@ -35,8 +36,21 @@ std::string hexToBinary(const std::string& hex_encoding) {
             cout << "Decimal Value is: " << ((curChar) - 48) << endl;
             cout << "As Binary is: " << bitset<4>((int) curChar) << endl;
             cout << "-----------------------------------------------------------" << endl;
+            binRep = bitset<4>((int) curChar).to_string();
         }
+        else {
+            cout << "-----------------------------------------------------------" << endl;
+            cout << "Char is: " << curChar << endl;
+            cout << "ACII Value: " << (int) (curChar) << endl;
+            cout << "Decimal Value is: " << ((curChar) - 87) << endl;
+            cout << "As Binary is: " << bitset<4>((curChar) - 87) << endl;
+            cout << "-----------------------------------------------------------" << endl;
+            binRep = bitset<4>((int) curChar - 87).to_string();
+        }
+        stringBinaryRepresentation += binRep;
     }
+
+    return stringBinaryRepresentation;
 }
 
 
