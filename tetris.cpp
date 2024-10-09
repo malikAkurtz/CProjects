@@ -53,7 +53,7 @@ class SingleCube : public Shape {
         sf::Vector2f initialpos(x, y);
         oneCube.setPosition(initialpos);
         parts.push_back(oneCube);
-        //shapesOnBoard.push_back(this);
+
         isFalling = true;
     }
 };
