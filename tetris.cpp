@@ -111,8 +111,12 @@ void gameLogic(sf::Keyboard::Key &keypress) {
 
     if (shapesOnBoard.size() > 0) {
         for (auto &part : fallingShape->parts) {
-            part.move(0,0.05);
+            if (part.getGlobalBounds().getPosition().y < SCREEN_HEIGHT - part.getGlobalBounds().height) {
+                cout << "here";
+                part.move(0,0.05);
+            }
         }
+        // spawn next shape
     }
     
 }
