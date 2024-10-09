@@ -14,6 +14,7 @@
 #include <iostream>
 #include <SFML/Graphics.hpp>
 #include <SFML/Window.hpp>
+#include <time.h>
 
 using namespace std;
 
@@ -35,6 +36,7 @@ Shape *fallingShape;
 class Shape {
     public:
     vector<sf::RectangleShape> parts;
+    bool isFalling;
 
     virtual ~Shape() {} // destructor
 
@@ -51,6 +53,7 @@ class SingleCube : public Shape {
         oneCube.setPosition(initialpos);
         parts.push_back(oneCube);
         shapesOnBoard.push_back(this);
+        isFalling = true;
     }
 };
 
@@ -67,12 +70,15 @@ void draw(sf::RenderWindow &window) {
     window.clear();
 
     // Used chat to help me out with these pointers
-    for (int i = 0; i < shapesOnBoard.size(); i++) {
-        Shape *curShape = shapesOnBoard[i];
-        for (int j = 0; j < curShape->parts.size(); j++) {
-            window.draw(curShape->parts[j]);
+    if (shapesOnBoard.size() > 0) {
+        for (int i = 0; i < shapesOnBoard.size(); i++) {
+            Shape *curShape = shapesOnBoard[i];
+            for (int j = 0; j < curShape->parts.size(); j++) {
+                window.draw(curShape->parts[j]);
+            }
         }
     }
+    
 
     window.display();
 }
@@ -80,6 +86,7 @@ void draw(sf::RenderWindow &window) {
 
 
 void spawnSingleCube() {
+    cout << "Spawned a cube";
     SingleCube *newSingleCube = new SingleCube(SCREEN_WIDTH/2, 0.0);
     shapesOnBoard.push_back(newSingleCube);
 }
@@ -87,15 +94,45 @@ void spawnSingleCube() {
 
 
 void gameLogic(sf::Keyboard::Key &keypress) {
-    fallingShape = shapesOnBoard.back();
 
-    if (keypress == sf::Keyboard::Up) {
-        cout << "up" << endl;
+    // If there are shapes on the board
+    if (shapesOnBoard.size() > 0) {
+        // get the last shape appended to the board since this will be the recent shape that is falling
+        fallingShape = shapesOnBoard.back();
+        // while the shape is in a falling state
+            // for each part of the shape
+        for (auto &part : fallingShape->parts) {
+            // so long as the part is not at the bottom of the screen 
+            if (part.getGlobalBounds().getPosition().y < SCREEN_HEIGHT - part.getGlobalBounds().height) {
+                // move the part down
+                part.move(0,0.05);
+            }
+            else {
+                fallingShape->isFalling = false;
+                break;
+            }
+        }
+
+        for (auto &part : fallingShape->parts) {
+            for (auto &otherShape : shapesOnBoard) {
+                if (otherShape == fallingShape) {continue;} // jump over ourselves
+                for (auto &otherShapePart : otherShape->parts) {
+                    if (part.getGlobalBounds().intersects(otherShapePart.getGlobalBounds())) {
+                        fallingShape->isFalling = false;
+                        break;
+                    }
+                }
+            }
+        }
+
+        if (!fallingShape->isFalling) {
+            spawnSingleCube();
+        }        
     }
-    else if (keypress == sf::Keyboard::Down) {
-        cout << "down" << endl;
-    }
-    else if (keypress == sf::Keyboard::Left) {
+    
+
+    
+    if (keypress == sf::Keyboard::Left) {
         cout << "left" << endl;
         for (auto &part : fallingShape->parts) {
             part.move(-12.0, 0.0);
@@ -109,15 +146,6 @@ void gameLogic(sf::Keyboard::Key &keypress) {
     }
 
 
-    if (shapesOnBoard.size() > 0) {
-        for (auto &part : fallingShape->parts) {
-            if (part.getGlobalBounds().getPosition().y < SCREEN_HEIGHT - part.getGlobalBounds().height) {
-                cout << "here";
-                part.move(0,0.05);
-            }
-        }
-        // spawn next shape
-    }
     
 }
 
