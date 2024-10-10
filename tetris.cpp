@@ -170,8 +170,14 @@ void gameLogic(sf::Keyboard::Key &keypress) {
     
     if (keypress == sf::Keyboard::Left) {
         cout << "left" << endl;
+        sf::RectangleShape leftMostpart = fallingShape->parts[0];
         for (auto &part : fallingShape->parts) {
-            if (part.getGlobalBounds().left > 0) {
+            if (part.getGlobalBounds().left < leftMostpart.getGlobalBounds().left) {
+                leftMostpart = part;
+            }
+        }
+        for (auto &part : fallingShape->parts) {
+            if (leftMostpart.getGlobalBounds().left > 0) {
                 part.move(-30.0, 0.0);
             }
             
@@ -179,11 +185,16 @@ void gameLogic(sf::Keyboard::Key &keypress) {
     }
     else if (keypress == sf::Keyboard::Right) {
         cout << "right" << endl;
+        sf::RectangleShape rightMostpart = fallingShape->parts[0];
         for (auto &part : fallingShape->parts) {
-            if ((part.getGlobalBounds().left+part.getGlobalBounds().width) < SCREEN_WIDTH) {
+            if (part.getGlobalBounds().left+part.getGlobalBounds().width > rightMostpart.getGlobalBounds().left+rightMostpart.getGlobalBounds().width) {
+                rightMostpart = part;
+            }
+        }
+        for (auto &part : fallingShape->parts) {
+            if (rightMostpart.getGlobalBounds().left+rightMostpart.getGlobalBounds().width < SCREEN_WIDTH) {
                 part.move(30.0, 0.0);
             }
-            
         }
     }
 
