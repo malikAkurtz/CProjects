@@ -75,7 +75,6 @@ string binaryToBase64(const std::string& binary) {
                 cout << cur6Bits << endl;
             }
             else {
-                cout << "i is: " << i << endl;
                 while (cur6Bits.length() < 6) {
                     cout << "Here?" << endl;
                     cur6Bits += "0";
