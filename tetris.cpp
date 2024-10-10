@@ -170,30 +170,75 @@ void gameLogic(sf::Keyboard::Key &keypress) {
     
     if (keypress == sf::Keyboard::Left) {
         cout << "left" << endl;
-        sf::RectangleShape leftMostpart = fallingShape->parts[0];
+        bool canMoveLeft = true;
+
+        // Check if all parts of the fallingShape can move right
         for (auto &part : fallingShape->parts) {
-            if (part.getGlobalBounds().left < leftMostpart.getGlobalBounds().left) {
-                leftMostpart = part;
+            // Calculate the next position if the part moved right
+            sf::FloatRect nextPos = part.getGlobalBounds();
+            nextPos.left -=SHAPE_BLOCK_SIZE;
+
+            // Boundary check
+            if (nextPos.left < 0) {
+                cout << "No";
+                canMoveLeft = false;
+                break;
             }
+
+            // Collision check with other shapes
+            for (auto &otherShape : shapesOnBoard) {
+                if (otherShape == fallingShape) continue;
+                for (auto &otherShapePart : otherShape->parts) {
+                    if (nextPos.intersects(otherShapePart.getGlobalBounds())) {
+                        canMoveLeft = false;
+                        break;
+                    }
+                }
+                if (!canMoveLeft) break;
+            }
+            if (!canMoveLeft) break;
         }
-        for (auto &part : fallingShape->parts) {
-            if (leftMostpart.getGlobalBounds().left > 0) {
-                part.move(-30.0, 0.0);
+
+        if (canMoveLeft) {
+            for (auto &part : fallingShape->parts) {
+                part.move(-SHAPE_BLOCK_SIZE, 0.0);
             }
-            
         }
     }
+    
     else if (keypress == sf::Keyboard::Right) {
         cout << "right" << endl;
-        sf::RectangleShape rightMostpart = fallingShape->parts[0];
+        bool canMoveRight = true;
+
+        // Check if all parts of the fallingShape can move right
         for (auto &part : fallingShape->parts) {
-            if (part.getGlobalBounds().left+part.getGlobalBounds().width > rightMostpart.getGlobalBounds().left+rightMostpart.getGlobalBounds().width) {
-                rightMostpart = part;
+            // Calculate the next position if the part moved right
+            sf::FloatRect nextPos = part.getGlobalBounds();
+            nextPos.left += SHAPE_BLOCK_SIZE;
+
+            // Boundary check
+            if (nextPos.left + nextPos.width > SCREEN_WIDTH) {
+                canMoveRight = false;
+                break;
             }
+
+            // Collision check with other shapes
+            for (auto &otherShape : shapesOnBoard) {
+                if (otherShape == fallingShape) continue;
+                for (auto &otherShapePart : otherShape->parts) {
+                    if (nextPos.intersects(otherShapePart.getGlobalBounds())) {
+                        canMoveRight = false;
+                        break;
+                    }
+                }
+                if (!canMoveRight) break;
+            }
+            if (!canMoveRight) break;
         }
-        for (auto &part : fallingShape->parts) {
-            if (rightMostpart.getGlobalBounds().left+rightMostpart.getGlobalBounds().width < SCREEN_WIDTH) {
-                part.move(30.0, 0.0);
+
+        if (canMoveRight) {
+            for (auto &part : fallingShape->parts) {
+                part.move(SHAPE_BLOCK_SIZE, 0.0);
             }
         }
     }
