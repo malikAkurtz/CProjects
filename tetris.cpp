@@ -261,6 +261,7 @@ sf::Keyboard::Key getInput(sf::Event &event){
             break;
         case sf::Keyboard::Right:
             return sf::Keyboard::Right;
+            break;
         default:
             return sf::Keyboard::Unknown;
     }
