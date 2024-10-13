@@ -2,7 +2,6 @@
 #include <string>
 #include <iostream>
 #include <sstream>
-
 /*
 Vector Class
 
@@ -146,6 +145,7 @@ TODO
 class Matrix {
     private:
     vector<Vector> matrixVectors;
+    pair<int, int> dimension;
 
     public:
     Matrix() {
@@ -166,6 +166,20 @@ class Matrix {
         return matrixVectors;
     }
 
+    int getNumCols() {
+        return matrixVectors.size();
+    }
+
+    int getNumRows() {
+        return getVectors()[0].getSize();
+    }
+
+    
+    pair<int, int> getShape() {
+        dimension.first = getNumRows();
+        dimension.second = getNumCols();
+        return dimension;
+    }
 
     string toString() {
         stringstream ss;
@@ -176,6 +190,23 @@ class Matrix {
     }
 };
 
+bool test_matrixShape() {
+
+    Matrix testMatrix;
+
+    Vector testVector({1,2,3});
+
+    //return 3 x 1
+
+    testMatrix.addVector(testVector);
+
+    pair<int,int> trueShape;
+    trueShape.first = 3;
+    trueShape.second = 1;
+
+    return (testMatrix.getShape() == trueShape);
+
+}
 
 bool test_vectorAddition() {
     vector<int> first = {1,2,3};
@@ -268,7 +299,6 @@ bool run_tests() {
     if (all_good != 1) {
         return all_good;
     }
-
     cout << "Testing vectorAddition()..." << endl;
     all_good &= test_vectorAddition();
     if (all_good != 1) {
@@ -276,6 +306,11 @@ bool run_tests() {
     }
     cout << "Testing vectorSubtraction()..." << endl;
     all_good &= test_vectorSubtraction();
+    if (all_good != 1) {
+        return all_good;
+    }
+    cout << "Testing matrixShape()..." << endl;
+    all_good &= test_matrixShape();
     if (all_good != 1) {
         return all_good;
     }
