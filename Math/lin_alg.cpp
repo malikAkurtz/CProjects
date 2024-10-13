@@ -21,9 +21,6 @@ Methods:
 5.) int                                 dot(Vector otherVector)
 6.) Vector                              cross(Vector otherVector)
 
-TODO
-- addition
-- subtraction
 
 */
 
@@ -84,6 +81,26 @@ class Vector {
         return true;
     }
 
+    Vector operator + (const Vector& otherVector) const {
+        Vector resultant;
+
+        for (int i = 0; i < getSize(); i++) {
+            resultant.addElement(getElements()[i] + otherVector.getElements()[i]);
+        }
+
+        return resultant;
+    }
+
+    Vector operator - (const Vector& otherVector) const {
+        Vector resultant;
+
+        for (int i = 0; i < getSize(); i++) {
+            resultant.addElement(getElements()[i] - otherVector.getElements()[i]);
+        }
+
+        return resultant;
+    }
+
     Vector cross(Vector otherVector) {
         vector<int> components = {};
         int componenti = (getElements()[1] * otherVector.getElements()[2]) - (getElements()[2] * otherVector.getElements()[1]);
@@ -100,6 +117,8 @@ class Vector {
         Vector normalVector(components);
         return normalVector;
     }
+
+
 };
 
 /*
@@ -157,6 +176,32 @@ class Matrix {
     }
 };
 
+
+bool test_vectorAddition() {
+    vector<int> first = {1,2,3};
+    vector<int> second = {2,2,2};
+    Vector v1(first);
+    Vector v2(second);
+
+    Vector resultant = v1 + v2;
+
+    Vector trueResult({3,4,5});
+
+    return (resultant == trueResult);
+}
+
+bool test_vectorSubtraction() {
+    vector<int> first = {1,2,3};
+    vector<int> second = {3,2,1};
+    Vector v1(first);
+    Vector v2(second);
+
+    Vector resultant = v1 - v2;
+
+    Vector trueResult({-2,0,2});
+
+    return (resultant == trueResult);
+}
 
 
 bool test_vectorSize() {
@@ -220,6 +265,17 @@ bool run_tests() {
     }
     cout << "Testing vectorAddElement()..." << endl;
     all_good &= test_vectorAddElement();
+    if (all_good != 1) {
+        return all_good;
+    }
+
+    cout << "Testing vectorAddition()..." << endl;
+    all_good &= test_vectorAddition();
+    if (all_good != 1) {
+        return all_good;
+    }
+    cout << "Testing vectorSubtraction()..." << endl;
+    all_good &= test_vectorSubtraction();
     if (all_good != 1) {
         return all_good;
     }
