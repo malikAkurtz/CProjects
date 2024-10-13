@@ -35,6 +35,10 @@ Vector::Vector(vector<int> elements) {
     vectorElements = elements;
 }
 
+Vector::Vector(const Vector& otherVector) {
+    vectorElements = otherVector.getElements();
+}
+
 string Vector::toString() const{
     stringstream ss;
     ss << "[ ";
@@ -76,6 +80,8 @@ bool Vector::operator==(const Vector& otherVector) const {
     }
     return true;
 }
+
+
 
 Vector Vector::operator + (const Vector& otherVector) const {
     Vector resultant;

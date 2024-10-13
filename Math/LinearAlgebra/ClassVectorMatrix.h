@@ -17,6 +17,7 @@ public:
     // Constructors
     Vector();
     Vector(vector<int> elements);
+    Vector::Vector(const Vector& otherVector);
 
     // Methods
     string toString() const;
