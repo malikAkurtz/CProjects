@@ -19,6 +19,9 @@ Example 1:
 Input: nums = [1,2,3,4]
 Output: [24,12,8,6]
 
+Prefix shoud be [1, 2, 6, 24]
+
+postfix should be [24, 24, 12, 4]
 
 Example 2:
 
@@ -39,56 +42,72 @@ that we will return at the end
 */
 
 vector<int> productExceptSelf(vector<int>& nums) {
-        // vector<int>::iterator leftSide;
-        // vector<int>::iterator rightSide;
-        // int leftProduct = 1;
-        // int rightProduct = 1;
+    vector<int> output ={};
+    vector<int> prefix = {};
+    vector<int> postfix= {};
 
-        vector<int> toReturn;
+    int leftProduct = 1;
+    int rightProduct = 1;
 
-        for (int i = 0; i < nums.size(); i++) {
 
-            int product = 1;
-
-            for (int j = 0; j < nums.size(); j++) {
-                if (j==i) {continue;}
-                else {
-                    product *= nums[j];
-                }
-            }
-            toReturn.push_back(product);
-            // leftSide = nums.begin();
-            // rightSide = nums.end()-1;
-
-            // leftProduct = 1;
-            // rightProduct = 1;
-
-            // int curIndex = 0;
-            // while (curIndex != i) {
-            //     leftProduct *= *leftSide;
-            //     curIndex++;
-            //     leftSide++;
-            // }
-            // curIndex = nums.size()-1;
-            // while (curIndex != i) {
-            //     rightProduct *= *rightSide;
-            //     curIndex--;
-            //     rightSide--;
-            // }
-
-            // //cout << "For: " << nums[i] << " Left Product is: " << leftProduct << " Right Product is: " << rightProduct << endl;
-
-            // toReturn.push_back(leftProduct*rightProduct);
+    // Making Prefix vector
+    for (int i = 0; i < nums.size(); i++) {
+        //cout << nums[i] << endl;
+        if (i == 0) {
+            prefix.push_back(nums[i]);
         }
-
-        // cout << "[";
-        // for (int each : toRetur ) {
-        // cout << each << endl;
-        // } cout << "]";
-
-        return toReturn;
-
+        else {
+            prefix.push_back(nums[i]*prefix[i-1]);
+        }
+        
     }
+    int separateCounter = 0;
+    for (int i = nums.size()-1; i >= 0; i--) {
+        if (i == nums.size()-1) {
+            postfix.push_back(nums[nums.size()-1]);
+        }
+        else {
+            //cout << nums[i] << " * " <<postfix[i-1];
+            postfix.push_back(nums[i] * postfix[separateCounter]);
+            separateCounter++;
+        }
+        
+    }
+
+    reverse(postfix.begin(), postfix.end());
+
+    // cout << "Prefix : " << endl;
+
+    // for (int i = 0; i < prefix.size(); i++) {
+    //     cout << prefix[i] << endl;
+    // }
+
+    // cout << "postfix : " << endl;
+    // for (int i = 0; i < postfix.size(); i++) {
+    //     cout <<  postfix[i] << endl;
+    // }
+    
+    // cout << "Done";
+
+
+    for (int i = 0; i < nums.size(); i++) {
+        if (i == 0) {
+            output.push_back(postfix[i+1]);
+        }
+        else if (i == nums.size()-1) {
+            output.push_back(prefix[i-1]);
+        }
+        else {
+            leftProduct = prefix[i-1];
+            rightProduct = postfix[i+1];
+            output.push_back(leftProduct*rightProduct);
+        }
+    }
+            
+    return output;     
+}
+
+
 
 
 
