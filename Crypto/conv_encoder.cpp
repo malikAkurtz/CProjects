@@ -34,12 +34,12 @@ int calculateHammingDistance(string code1, string code2) {
 
 // Calculate Parity C1 Method
 // This method takes a veector of 3 bits, calculates it parity, and returns it
-int calculateParityC1(string three_bit_window) {
+int calculateParityC1(string shiftRegister) {
     int parityBitC1 = 0;
 
     // for each bit in each of the three registers, add them all up mod 2
-    for (int i = 0; i < three_bit_window.length(); i++) {
-        parityBitC1 = (parityBitC1 + (three_bit_window[i]-'0')) % 2;
+    for (int i = 0; i < shiftRegister.length(); i++) {
+        parityBitC1 = (parityBitC1 + (shiftRegister[i]-'0')) % 2;
     }
 
     return parityBitC1;
@@ -48,27 +48,40 @@ int calculateParityC1(string three_bit_window) {
 
 // Calculate Parity C2 Method
 // This method takes a veector of 2 bits, calculates it parity, and returns it
-int calculateParityC2(string three_bit_window) {
+int calculateParityC2(string shiftRegister) {
     int parityBitC2 = 0;
 
     // for each bit in each of the 2 registers, add them all up mod 2
-    for (int i = 0; i < three_bit_window.length()-1; i++) {
-        parityBitC2 = (parityBitC2 + (three_bit_window[i]-'0')) % 2;
+    for (int i = 0; i < shiftRegister.length()-1; i++) {
+        parityBitC2 = (parityBitC2 + (shiftRegister[i]-'0')) % 2;
     }
 
     return parityBitC2;
 }
 
-int calculateParityC3(string three_bit_window) {
+int calculateParityC3(string shiftRegister) {
     int parityBitC3 = 0;
 
     // for each bit in each of the 2 registers, add them all up mod 2
-    for (int i = 0; i < three_bit_window.size()-2; i++) {
-        parityBitC3 = (parityBitC3 + (three_bit_window[i]-'0')) % 2;
+    for (int i = 0; i < shiftRegister.size()-2; i++) {
+        parityBitC3 = (parityBitC3 + (shiftRegister[i]-'0')) % 2;
     }
 
     return parityBitC3;
 }
+
+int calculateParityC4(string shiftRegister) {
+    int parityBitC4 = 0;
+
+    // for each bit in each of the 2 registers, add them all up mod 2
+    for (int i = 0; i < shiftRegister.size()-3; i++) {
+        parityBitC4 = (parityBitC4 + (shiftRegister[i]-'0')) % 2;
+    }
+
+    return parityBitC4;
+}
+
+
 
 
 // Encode Method
@@ -102,9 +115,9 @@ string encode(string code) {
     encodedVector += std::to_string(calculateParityC2(sliding_window));
     encodedVector += std::to_string(calculateParityC3(sliding_window));
 
-    cout << "Time Steps was: " << timeSteps << endl;
+    //cout << "Time Steps was: " << timeSteps << endl;
     timeSteps += 1;
-    cout << "Time Steps is now: " << timeSteps << endl;
+    //cout << "Time Steps is now: " << timeSteps << endl;
 
 
 
@@ -122,9 +135,9 @@ string encode(string code) {
     encodedVector += std::to_string(calculateParityC2(sliding_window));
     encodedVector += std::to_string(calculateParityC3(sliding_window));
 
-    cout << "Time Steps was: " << timeSteps << endl;
+    //cout << "Time Steps was: " << timeSteps << endl;
     timeSteps += 1;
-    cout << "Time Steps is now: " << timeSteps << endl;
+    //cout << "Time Steps is now: " << timeSteps << endl;
     
     // encoded_vector.push_back(calculateParityC2(sliding_window));
 
@@ -136,9 +149,9 @@ string encode(string code) {
         encodedVector += std::to_string(calculateParityC1(sliding_window));
         encodedVector += std::to_string(calculateParityC2(sliding_window));
         encodedVector += std::to_string(calculateParityC3(sliding_window));
-        cout << "Time Steps was: " << timeSteps << endl;
+        // cout << "Time Steps was: " << timeSteps << endl;
         timeSteps += 1;
-        cout << "Time Steps is now: " << timeSteps << endl;
+        // cout << "Time Steps is now: " << timeSteps << endl;
 
     }
 
@@ -210,7 +223,7 @@ struct vNode {
 string viterbiDecode(string noisy_encoded_code) {
     int numStates = 4; // Hardcoding this for now
 
-    string decodedVector = "";
+    string originalCode = "";
     
 
     vector<vector<vNode>> trellis(timeSteps+1);
@@ -219,23 +232,21 @@ string viterbiDecode(string noisy_encoded_code) {
     trellis[0].push_back(initialNode);
     //initialize the only node at t = 0 (0,0)
 
-    cout << "Here" << endl;
-
-    // trellis = [[vNode, vNode, vNode, vNode]] where the index of the node maps to the state
-
-
 
     string input0;
     string input1;
     string expectedOutput0;
     string expectedOutput1;
+    vector<vNode> bestPathsAt_t;
 
 
     // index a node with trellis[t][s] which will return the node at time t with state s
     // now for every timestep
-    for (int t = 1; t < timeSteps; t++) {
+    for (int t = 1; t < (timeSteps+1); t++) {
         // save the input that corresponding to the bit that is read from the noisy message
-        string observedInput = noisy_encoded_code.substr(t-1, 3);
+        string observedInput = noisy_encoded_code.substr(3*(t-1), 3);
+        //cout << "Observed Input at t = " << t<< " is : " << observedInput << endl;
+        bestPathsAt_t.clear();
         // for every state
         for (int s = 0; s < numStates; s++) { // THIS IS HARDCODED TO WORK FOR 4 STATES
         //******** DONT FORGET TO SKIP OVER T = 1 FOR S IS 0 ********************/
@@ -251,7 +262,6 @@ string viterbiDecode(string noisy_encoded_code) {
                     expectedOutput0 += to_string(calculateParityC2(input0));
                     expectedOutput0 += to_string(calculateParityC3(input0));
 
-                    cout << "Expected for input 0: " << expectedOutput0 << endl;
 
                     // now need to compare this with the observedInput and calculate the hamming distance
                     firstNode.cumHammingDistance += trellis[t-1][s].cumHammingDistance + calculateHammingDistance(expectedOutput0, observedInput);
@@ -265,9 +275,9 @@ string viterbiDecode(string noisy_encoded_code) {
                     expectedOutput1 = to_string(calculateParityC1(input1));
                     expectedOutput1 += to_string(calculateParityC2(input1));
                     expectedOutput1 += to_string(calculateParityC3(input1));
-                    cout << "Expected for input 1: " << expectedOutput1 << endl;
-                    cout << "Observed input is: " << observedInput << endl;
-                    cout << "Hamming distance is: " << calculateHammingDistance(expectedOutput1, observedInput) << endl;
+                    // cout << "Expected for input 1: " << expectedOutput1 << endl;
+                    // cout << "Observed input is: " << observedInput << endl;
+                    // cout << "Hamming distance is: " << calculateHammingDistance(expectedOutput1, observedInput) << endl;
 
                     secondNode.cumHammingDistance += trellis[t-1][s].cumHammingDistance + calculateHammingDistance(expectedOutput1, observedInput);
                     secondNode.inputArrivalBit = 1;
@@ -297,6 +307,10 @@ string viterbiDecode(string noisy_encoded_code) {
                     expectedOutput1 = to_string(calculateParityC1(input1));
                     expectedOutput1 += to_string(calculateParityC2(input1));
                     expectedOutput1 += to_string(calculateParityC3(input1));
+
+                    // cout << "Expected for input 1: " << expectedOutput1 << endl;
+                    // cout << "Observed input is: " << observedInput << endl;
+                    // cout << "Hamming distance is: " << calculateHammingDistance(expectedOutput1, observedInput) << endl;
 
                     secondNode.cumHammingDistance += trellis[t-1][s].cumHammingDistance + calculateHammingDistance(expectedOutput1, observedInput);
                     secondNode.inputArrivalBit = 1;
@@ -450,12 +464,12 @@ string viterbiDecode(string noisy_encoded_code) {
 
                 }
             }
-            
-       //*** PERFORM A CHECK AT THE END OF EACH t AND GET RID OF DUPLICATE NOTES, GET RID OF THE ONE WITH THE HIGHER HAMMING DISTANCE
+        }
+
+        //*** PERFORM A CHECK AT THE END OF EACH t AND GET RID OF DUPLICATE NOTES, GET RID OF THE ONE WITH THE HIGHER HAMMING DISTANCE
        if (t > 2) {
-            vector<vNode> bestPathsAt_t = {};
-            sort(trellis[t].begin(), trellis[t].end());   
             for (int i = 0; i < trellis[t].size()-1; i++) {
+                sort(trellis[t].begin(), trellis[t].end()); 
                 if (trellis[t][i].state == trellis[t][i+1].state) {
                     if (trellis[t][i].cumHammingDistance <= trellis[t][i+1].cumHammingDistance) {
                         bestPathsAt_t.push_back(trellis[t][i]);
@@ -468,20 +482,36 @@ string viterbiDecode(string noisy_encoded_code) {
 
             trellis[t] = bestPathsAt_t;
        }
-        
-    
-        }
     }
     
     for (int i = 0; i < trellis.size(); i++) {
+        // Sort the nodes for this timestep by their state
+        sort(trellis[i].begin(), trellis[i].end());
+        
         cout << "For t = " << i << endl;
         for (int j = 0; j < trellis[i].size(); j++) {
-            cout << "Node State: " << trellis[i][j].state << " Cumulative Hamming Distance: " << trellis[i][j].cumHammingDistance << endl;
+            cout << "Node State: " << trellis[i][j].state 
+                << " Cumulative Hamming Distance: " << trellis[i][j].cumHammingDistance << endl;
         }
     }
 
 
-    return "LOL";
+
+    // Work backwards to figure out the original message
+    //cout << "timeSteps IS IS IS: " << timeSteps << endl;
+    for (int t = timeSteps;t > 0; t--) {
+        //cout << "t is: " << t << endl;
+        vNode bestPathNode = trellis[t][0];
+        for (int i = 1; i < trellis[t].size();i++) {
+            if (trellis[t][i].cumHammingDistance < bestPathNode.cumHammingDistance) {
+                bestPathNode = trellis[t][i];
+            }
+        }
+        originalCode += to_string(bestPathNode.inputArrivalBit);
+    }
+
+    reverse(originalCode.begin(), originalCode.end());
+    return originalCode;
 }
 
 
@@ -506,8 +536,13 @@ int main() {
     string encoded = encode(code);
     cout << "Encoded Code       -> " << encoded << endl;
     string noisy_encoded = addNoise(encoded, p);
+    // string s = ""; //debugging
+    // s += "1011";
+    // s += "1101";
+    // s += "0110";
     cout << "Code After Noise   -> " << noisy_encoded << endl;
-    cout << viterbiDecode("101110011110");
+    string originalCode = viterbiDecode(noisy_encoded);
+    cout << "The original code is: " << originalCode;
 
     return 0;
 
