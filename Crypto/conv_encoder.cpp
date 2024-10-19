@@ -5,8 +5,27 @@
 #include <bitset>
 #include <cstdlib>
 #include <time.h>
+#include <cmath>
 
 using namespace std;
+
+struct vNode {
+    int cumHammingDistance=0;
+    int prevNodeState=-1;
+    int inputArrivalBit=-1;
+    int state;
+
+    bool operator<(const vNode& other) const {
+        return state < other.state;
+    }
+};
+
+int calculateHammingDistance(string code1, string code2);
+string calculateParities(string shiftregister);
+string addNoise(string code, float prob_of_error);
+void printTrellisStates(const vector<vector<vNode>> &trellis);
+string getOriginalCode(const vector<vector<vNode>> &trellis);
+void removeDuplicatePaths(vector<vector<vNode>> &trellis, int t);
 
 enum State {
     STATE_0,  // 0  -> representing (0,0)
@@ -17,83 +36,19 @@ enum State {
 
 int timeSteps = 0;
 
-int calculateHammingDistance(string code1, string code2) {
-    if (code1.length() != code2.length()) {
-        return -1;
-    }
-
-    int hammingDistance = 0;
-    for (int i = 0; i < code1.length(); i++) {
-        if (code1[i] != code2[i]) {
-            hammingDistance++;
-        }
-    }
-
-    return hammingDistance;
-}
-
-// Calculate Parity C1 Method
-// This method takes a veector of 3 bits, calculates it parity, and returns it
-int calculateParityC1(string shiftRegister) {
-    int parityBitC1 = 0;
-
-    // for each bit in each of the three registers, add them all up mod 2
-    for (int i = 0; i < shiftRegister.length(); i++) {
-        parityBitC1 = (parityBitC1 + (shiftRegister[i]-'0')) % 2;
-    }
-
-    return parityBitC1;
-}
-
-
-// Calculate Parity C2 Method
-// This method takes a veector of 2 bits, calculates it parity, and returns it
-int calculateParityC2(string shiftRegister) {
-    int parityBitC2 = 0;
-
-    // for each bit in each of the 2 registers, add them all up mod 2
-    for (int i = 0; i < shiftRegister.length()-1; i++) {
-        parityBitC2 = (parityBitC2 + (shiftRegister[i]-'0')) % 2;
-    }
-
-    return parityBitC2;
-}
-
-int calculateParityC3(string shiftRegister) {
-    int parityBitC3 = 0;
-
-    // for each bit in each of the 2 registers, add them all up mod 2
-    for (int i = 0; i < shiftRegister.size()-2; i++) {
-        parityBitC3 = (parityBitC3 + (shiftRegister[i]-'0')) % 2;
-    }
-
-    return parityBitC3;
-}
-
-int calculateParityC4(string shiftRegister) {
-    int parityBitC4 = 0;
-
-    // for each bit in each of the 2 registers, add them all up mod 2
-    for (int i = 0; i < shiftRegister.size()-3; i++) {
-        parityBitC4 = (parityBitC4 + (shiftRegister[i]-'0')) % 2;
-    }
-
-    return parityBitC4;
-}
-
-
-
 
 // Encode Method
 // Takes in a 16 bit code and return its encoded version after applying function C1, and C2 over the rolling window
-string encode(string code) {
+string encode(string code, int k) { // k is the constraint length i.e length of the shift register we want to use
 
     string encodedVector = "";
-
+    string sliding_window = "";
 
     // Initializing the slides window that we will use for our C1, C2, C3 parity calculations
 
-    string sliding_window = "000";
+    for (int i =0; i < k; i++) {
+        sliding_window += "0";
+    }
 
     
     // This is where our sliding window will start from the left of the code, moving to the right, and calculating
@@ -111,9 +66,7 @@ string encode(string code) {
     sliding_window[2] = code[0];
 
     // add the result of the parity calculation from C1, C2, C3 to the encoded vector
-    encodedVector += std::to_string(calculateParityC1(sliding_window));
-    encodedVector += std::to_string(calculateParityC2(sliding_window));
-    encodedVector += std::to_string(calculateParityC3(sliding_window));
+    encodedVector += calculateParities(sliding_window);
 
     //cout << "Time Steps was: " << timeSteps << endl;
     timeSteps += 1;
@@ -131,9 +84,7 @@ string encode(string code) {
     sliding_window[2] = code[1];
 
     // add the result of the parity calculation from C1 to the encoded vector
-    encodedVector += std::to_string(calculateParityC1(sliding_window));
-    encodedVector += std::to_string(calculateParityC2(sliding_window));
-    encodedVector += std::to_string(calculateParityC3(sliding_window));
+    encodedVector += calculateParities(sliding_window);
 
     //cout << "Time Steps was: " << timeSteps << endl;
     timeSteps += 1;
@@ -146,9 +97,7 @@ string encode(string code) {
         sliding_window[0] = code[i-2];
         sliding_window[1] = code[i+1-2];
         sliding_window[2] = code[i+2-2];
-        encodedVector += std::to_string(calculateParityC1(sliding_window));
-        encodedVector += std::to_string(calculateParityC2(sliding_window));
-        encodedVector += std::to_string(calculateParityC3(sliding_window));
+        encodedVector += calculateParities(sliding_window);
         // cout << "Time Steps was: " << timeSteps << endl;
         timeSteps += 1;
         // cout << "Time Steps is now: " << timeSteps << endl;
@@ -164,6 +113,329 @@ string encode(string code) {
 
 
     return encodedVector;
+}
+
+
+/*
+index 0 will represent state (0,0)
+index 1 will represent state (0,1)
+index 2 will represent state (1,0)
+index 3 will represent state (1,1)
+*/
+
+
+// IN PROGRESS
+string viterbiDecode(string noisy_encoded_code, int k) {
+    int numStates = pow(2, k-1); 
+
+    string originalCode = "";
+    
+
+    vector<vector<vNode>> trellis(timeSteps+1);
+    vNode initialNode;
+    initialNode.state = 0;
+    trellis[0].push_back(initialNode);
+    //initialize the only node at t = 0 (0,0)
+
+
+    string input0;
+    string input1;
+    string expectedOutput0;
+    string expectedOutput1;
+    vector<vNode> bestPathsAt_t;
+
+
+    // index a node with trellis[t][s] which will return the node at time t with state s
+    // now for every timestep
+    for (int t = 1; t < (timeSteps+1); t++) {
+        // save the input that corresponding to the bit that is read from the noisy message
+        string observedInput = noisy_encoded_code.substr(k*(t-1), k);
+        //cout << "Observed Input at t = " << t<< " is : " << observedInput << endl;
+        //bestPathsAt_t.clear();
+        // for every state
+        for (int s = 0; s < numStates; s++) { // THIS IS HARDCODED TO WORK FOR 4 STATES
+        //******** DONT FORGET TO SKIP OVER T = 1 FOR S IS 0 ********************/
+            input0 = "";
+            input1 = "";
+            expectedOutput0 = "";
+            expectedOutput1 = "";
+            vNode firstNode, secondNode, thirdNode, fourthNode, fifthNode, sixthNode, seventhNode, eigthNode;
+            if (t == 1) {
+                // case for input 0
+                    input0 = "000";
+                    expectedOutput0 = calculateParities(input0);
+
+
+                    // now need to compare this with the observedInput and calculate the hamming distance
+                    firstNode.cumHammingDistance += trellis[t-1][s].cumHammingDistance + calculateHammingDistance(expectedOutput0, observedInput);
+                    firstNode.inputArrivalBit = 0;
+                    firstNode.prevNodeState = s;
+                    firstNode.state = 0;
+                    trellis[t].push_back(firstNode);
+
+                    // case for input 1;
+                    input1 = "001";
+                    expectedOutput1 = calculateParities(input1);
+
+                    // cout << "Expected for input 1: " << expectedOutput1 << endl;
+                    // cout << "Observed input is: " << observedInput << endl;
+                    // cout << "Hamming distance is: " << calculateHammingDistance(expectedOutput1, observedInput) << endl;
+
+                    secondNode.cumHammingDistance += trellis[t-1][s].cumHammingDistance + calculateHammingDistance(expectedOutput1, observedInput);
+                    secondNode.inputArrivalBit = 1;
+                    secondNode.prevNodeState = s;
+                    secondNode.state = 1;
+                    trellis[t].push_back(secondNode);
+                    break;
+            }
+            else if (t == 2) {
+                switch (s) {
+                case 0: // state (0,0)
+                    // case for input 0
+                    input0 = "000";
+                    expectedOutput0 = calculateParities(input0);
+
+
+                    // now need to compare this with the observedInput and calculate the hamming distance
+                    firstNode.cumHammingDistance += trellis[t-1][s].cumHammingDistance + calculateHammingDistance(expectedOutput0, observedInput);
+                    firstNode.inputArrivalBit = 0;
+                    firstNode.prevNodeState = s;
+                    firstNode.state = 0;
+                    trellis[t].push_back(firstNode);
+
+                    // case for input 1;
+                    input1 = "001";
+                    expectedOutput1 = calculateParities(input1);
+
+
+                    // cout << "Expected for input 1: " << expectedOutput1 << endl;
+                    // cout << "Observed input is: " << observedInput << endl;
+                    // cout << "Hamming distance is: " << calculateHammingDistance(expectedOutput1, observedInput) << endl;
+
+                    secondNode.cumHammingDistance += trellis[t-1][s].cumHammingDistance + calculateHammingDistance(expectedOutput1, observedInput);
+                    secondNode.inputArrivalBit = 1;
+                    secondNode.prevNodeState = s;
+                    secondNode.state = 1;
+                    trellis[t].push_back(secondNode);
+                    break;
+                case 1: // state (0,1)
+                    // case for input 0
+                    input0 = "010";
+                    expectedOutput0 = calculateParities(input0);
+
+
+                    // now need to compare this with the observedInput and calculate the hamming distance
+                    thirdNode.cumHammingDistance += trellis[t-1][s].cumHammingDistance + calculateHammingDistance(expectedOutput0, observedInput);
+                    thirdNode.inputArrivalBit = 0;
+                    thirdNode.prevNodeState = s;
+                    thirdNode.state = 2;
+                    trellis[t].push_back(thirdNode);
+
+                    // case for input 1;
+                    input1 = "011";
+                    expectedOutput1 = calculateParities(input1);
+
+
+                    fourthNode.cumHammingDistance += trellis[t-1][s].cumHammingDistance + calculateHammingDistance(expectedOutput1, observedInput);
+                    fourthNode.inputArrivalBit = 1;
+                    fourthNode.prevNodeState = s;
+                    fourthNode.state = 3;
+                                    
+                    trellis[t].push_back(fourthNode);
+                    break;
+
+                }
+            }
+            else {
+                switch (s) {
+                case 0: // state (0,0)
+                    // case for input 0
+                    input0 = "000";
+                    expectedOutput0 = calculateParities(input0);
+
+
+                    // now need to compare this with the observedInput and calculate the hamming distance
+                    firstNode.cumHammingDistance += trellis[t-1][s].cumHammingDistance + calculateHammingDistance(expectedOutput0, observedInput);
+                    firstNode.inputArrivalBit = 0;
+                    firstNode.prevNodeState = s;
+                    firstNode.state = 0;
+                    trellis[t].push_back(firstNode);
+
+                    // case for input 1;
+                    input1 = "001";
+                    expectedOutput1 = calculateParities(input1);
+
+
+                    secondNode.cumHammingDistance += trellis[t-1][s].cumHammingDistance + calculateHammingDistance(expectedOutput1, observedInput);
+                    secondNode.inputArrivalBit = 1;
+                    secondNode.prevNodeState = s;
+                    secondNode.state = 1;
+                    trellis[t].push_back(secondNode);
+                    
+                    break;
+                case 1: // state (0,1)
+                    // case for input 0
+                    input0 = "010";
+                    expectedOutput0 = calculateParities(input0);
+
+
+                    // now need to compare this with the observedInput and calculate the hamming distance
+                    thirdNode.cumHammingDistance += trellis[t-1][s].cumHammingDistance + calculateHammingDistance(expectedOutput0, observedInput);
+                    thirdNode.inputArrivalBit = 0;
+                    thirdNode.prevNodeState = s;
+                    thirdNode.state = 2;
+                    trellis[t].push_back(thirdNode);
+
+                    // case for input 1;
+                    input1 = "011";
+                    expectedOutput1 = calculateParities(input1);
+
+
+                    fourthNode.cumHammingDistance += trellis[t-1][s].cumHammingDistance + calculateHammingDistance(expectedOutput1, observedInput);
+                    fourthNode.inputArrivalBit = 1;
+                    fourthNode.prevNodeState = s;
+                    fourthNode.state = 3;
+                                    
+                    trellis[t].push_back(fourthNode);
+
+
+                    break;
+                case 2: // state (1,0)
+                    // case for input 0
+                    input0 = "100";
+                    expectedOutput0 = calculateParities(input0);
+
+
+                    // now need to compare this with the observedInput and calculate the hamming distance
+                    fifthNode.cumHammingDistance += trellis[t-1][s].cumHammingDistance + calculateHammingDistance(expectedOutput0, observedInput);
+                    fifthNode.inputArrivalBit = 0;
+                    fifthNode.prevNodeState = s;
+                    fifthNode.state = 0;
+                    trellis[t].push_back(fifthNode);
+
+                    // case for input 1;
+                    input1 = "101";
+                    expectedOutput1 = calculateParities(input1);
+
+
+                    sixthNode.cumHammingDistance += trellis[t-1][s].cumHammingDistance + calculateHammingDistance(expectedOutput1, observedInput);
+                    sixthNode.inputArrivalBit = 1;
+                    sixthNode.prevNodeState = s;
+                    sixthNode.state = 1;
+                    trellis[t].push_back(sixthNode);
+
+
+                    break;
+                case 3: // state (1,1)
+                    // case for input 0
+                    input0 = "110";
+                    expectedOutput0 = calculateParities(input0);
+
+
+                    // now need to compare this with the observedInput and calculate the hamming distance
+                    seventhNode.cumHammingDistance += trellis[t-1][s].cumHammingDistance + calculateHammingDistance(expectedOutput0, observedInput);
+                    seventhNode.inputArrivalBit = 0;
+                    seventhNode.prevNodeState = s;
+                    seventhNode.state = 2;
+                    trellis[t].push_back(seventhNode);
+
+                    // case for input 1;
+                    input1 = "111";
+                    expectedOutput1 = calculateParities(input1);
+
+
+                    eigthNode.cumHammingDistance += trellis[t-1][s].cumHammingDistance + calculateHammingDistance(expectedOutput1, observedInput);
+                    eigthNode.inputArrivalBit = 1;
+                    eigthNode.prevNodeState = s;
+                    eigthNode.state = 3;
+                    trellis[t].push_back(eigthNode);
+
+                    break;
+
+                }
+            }
+        }
+
+        //*** PERFORM A CHECK AT THE END OF EACH t AND GET RID OF DUPLICATE NOTES, GET RID OF THE ONE WITH THE HIGHER HAMMING DISTANCE
+       if (t > 2) {
+            removeDuplicatePaths(trellis, t);
+       }
+    }
+    
+    printTrellisStates(trellis);
+
+    return getOriginalCode(trellis);
+}
+
+
+
+int main() {
+
+    // used to get the random number between 0 and 1 when determining when to flip bits
+    srand( (unsigned)time( NULL ) );
+
+    // the code that we want to encode
+    string code = "1010";
+    int k = 3;
+
+
+    // the probability of a single bit flipping after encoding the original code
+    float p = 0.0;
+
+
+
+    cout << "Original Code      -> " << code << endl;
+    string encoded = encode(code, k);
+    cout << "Encoded Code       -> " << encoded << endl;
+    //string noisy_encoded = addNoise(encoded, p);
+    // string s = ""; //debugging
+    // s += "1011";
+    // s += "1101";
+    // s += "0110";
+    //cout << "Code After Noise   -> " << noisy_encoded << endl;
+    string originalCode = viterbiDecode("101110011110", k);
+    cout << "The original code is: " << originalCode;
+
+    return 0;
+
+}
+
+
+int calculateHammingDistance(string code1, string code2) {
+    if (code1.length() != code2.length()) {
+        return -1;
+    }
+
+    int hammingDistance = 0;
+    for (int i = 0; i < code1.length(); i++) {
+        if (code1[i] != code2[i]) {
+            hammingDistance++;
+        }
+    }
+
+    return hammingDistance;
+}
+
+string calculateParities(string shiftregister) {
+    string parityBits = "";
+
+
+    string registerSubstring;
+    int registerParity=0;
+
+    // (0,0,0)
+
+
+    for (int i = shiftregister.length(); i > 0; i--) {
+        registerSubstring = shiftregister.substr(0, i);
+        registerParity=0;
+        for (int j = 0; j < registerSubstring.length(); j++) {
+            registerParity = (registerParity + (registerSubstring[j]-'0')) % 2;
+        }
+        parityBits += to_string(registerParity);
+    }
+
+    return parityBits;
 }
 
 string addNoise(string code, float prob_of_error) {
@@ -193,312 +465,21 @@ string addNoise(string code, float prob_of_error) {
         }
         
     }
-
-
     return noisyEncoded;
-
 }
 
-
-/*
-index 0 will represent state (0,0)
-index 1 will represent state (0,1)
-index 2 will represent state (1,0)
-index 3 will represent state (1,1)
-*/
-
-struct vNode {
-    int cumHammingDistance=0;
-    int prevNodeState=-1;
-    int inputArrivalBit=-1;
-    int state;
-
-    bool operator<(const vNode& other) const {
-        return state < other.state;
-    }
-};
-
-
-// IN PROGRESS
-string viterbiDecode(string noisy_encoded_code) {
-    int numStates = 4; // Hardcoding this for now
-
-    string originalCode = "";
-    
-
-    vector<vector<vNode>> trellis(timeSteps+1);
-    vNode initialNode;
-    initialNode.state = 0;
-    trellis[0].push_back(initialNode);
-    //initialize the only node at t = 0 (0,0)
-
-
-    string input0;
-    string input1;
-    string expectedOutput0;
-    string expectedOutput1;
-    vector<vNode> bestPathsAt_t;
-
-
-    // index a node with trellis[t][s] which will return the node at time t with state s
-    // now for every timestep
-    for (int t = 1; t < (timeSteps+1); t++) {
-        // save the input that corresponding to the bit that is read from the noisy message
-        string observedInput = noisy_encoded_code.substr(3*(t-1), 3);
-        //cout << "Observed Input at t = " << t<< " is : " << observedInput << endl;
-        bestPathsAt_t.clear();
-        // for every state
-        for (int s = 0; s < numStates; s++) { // THIS IS HARDCODED TO WORK FOR 4 STATES
-        //******** DONT FORGET TO SKIP OVER T = 1 FOR S IS 0 ********************/
-            input0 = "";
-            input1 = "";
-            expectedOutput0 = "";
-            expectedOutput1 = "";
-            vNode firstNode, secondNode, thirdNode, fourthNode, fifthNode, sixthNode, seventhNode, eigthNode;
-            if (t == 1) {
-                // case for input 0
-                    input0 = "000";
-                    expectedOutput0 = to_string(calculateParityC1(input0));
-                    expectedOutput0 += to_string(calculateParityC2(input0));
-                    expectedOutput0 += to_string(calculateParityC3(input0));
-
-
-                    // now need to compare this with the observedInput and calculate the hamming distance
-                    firstNode.cumHammingDistance += trellis[t-1][s].cumHammingDistance + calculateHammingDistance(expectedOutput0, observedInput);
-                    firstNode.inputArrivalBit = 0;
-                    firstNode.prevNodeState = s;
-                    firstNode.state = 0;
-                    trellis[t].push_back(firstNode);
-
-                    // case for input 1;
-                    input1 = "001";
-                    expectedOutput1 = to_string(calculateParityC1(input1));
-                    expectedOutput1 += to_string(calculateParityC2(input1));
-                    expectedOutput1 += to_string(calculateParityC3(input1));
-                    // cout << "Expected for input 1: " << expectedOutput1 << endl;
-                    // cout << "Observed input is: " << observedInput << endl;
-                    // cout << "Hamming distance is: " << calculateHammingDistance(expectedOutput1, observedInput) << endl;
-
-                    secondNode.cumHammingDistance += trellis[t-1][s].cumHammingDistance + calculateHammingDistance(expectedOutput1, observedInput);
-                    secondNode.inputArrivalBit = 1;
-                    secondNode.prevNodeState = s;
-                    secondNode.state = 1;
-                    trellis[t].push_back(secondNode);
-                    break;
-            }
-            else if (t == 2) {
-                switch (s) {
-                case 0: // state (0,0)
-                    // case for input 0
-                    input0 = "000";
-                    expectedOutput0 = to_string(calculateParityC1(input0));
-                    expectedOutput0 += to_string(calculateParityC2(input0));
-                    expectedOutput0 += to_string(calculateParityC3(input0));
-
-                    // now need to compare this with the observedInput and calculate the hamming distance
-                    firstNode.cumHammingDistance += trellis[t-1][s].cumHammingDistance + calculateHammingDistance(expectedOutput0, observedInput);
-                    firstNode.inputArrivalBit = 0;
-                    firstNode.prevNodeState = s;
-                    firstNode.state = 0;
-                    trellis[t].push_back(firstNode);
-
-                    // case for input 1;
-                    input1 = "001";
-                    expectedOutput1 = to_string(calculateParityC1(input1));
-                    expectedOutput1 += to_string(calculateParityC2(input1));
-                    expectedOutput1 += to_string(calculateParityC3(input1));
-
-                    // cout << "Expected for input 1: " << expectedOutput1 << endl;
-                    // cout << "Observed input is: " << observedInput << endl;
-                    // cout << "Hamming distance is: " << calculateHammingDistance(expectedOutput1, observedInput) << endl;
-
-                    secondNode.cumHammingDistance += trellis[t-1][s].cumHammingDistance + calculateHammingDistance(expectedOutput1, observedInput);
-                    secondNode.inputArrivalBit = 1;
-                    secondNode.prevNodeState = s;
-                    secondNode.state = 1;
-                    trellis[t].push_back(secondNode);
-                    break;
-                case 1: // state (0,1)
-                    // case for input 0
-                    input0 = "010";
-                    expectedOutput0 = to_string(calculateParityC1(input0));
-                    expectedOutput0 += to_string(calculateParityC2(input0));
-                    expectedOutput0 += to_string(calculateParityC3(input0));
-
-                    // now need to compare this with the observedInput and calculate the hamming distance
-                    thirdNode.cumHammingDistance += trellis[t-1][s].cumHammingDistance + calculateHammingDistance(expectedOutput0, observedInput);
-                    thirdNode.inputArrivalBit = 0;
-                    thirdNode.prevNodeState = s;
-                    thirdNode.state = 2;
-                    trellis[t].push_back(thirdNode);
-
-                    // case for input 1;
-                    input1 = "011";
-                    expectedOutput1 = to_string(calculateParityC1(input1));
-                    expectedOutput1 += to_string(calculateParityC2(input1));
-                    expectedOutput1 += to_string(calculateParityC3(input1));
-
-                    fourthNode.cumHammingDistance += trellis[t-1][s].cumHammingDistance + calculateHammingDistance(expectedOutput1, observedInput);
-                    fourthNode.inputArrivalBit = 1;
-                    fourthNode.prevNodeState = s;
-                    fourthNode.state = 3;
-                                    
-                    trellis[t].push_back(fourthNode);
-                    break;
-
-                }
-            }
-            else {
-                switch (s) {
-                case 0: // state (0,0)
-                    // case for input 0
-                    input0 = "000";
-                    expectedOutput0 = to_string(calculateParityC1(input0));
-                    expectedOutput0 += to_string(calculateParityC2(input0));
-                    expectedOutput0 += to_string(calculateParityC3(input0));
-
-                    // now need to compare this with the observedInput and calculate the hamming distance
-                    firstNode.cumHammingDistance += trellis[t-1][s].cumHammingDistance + calculateHammingDistance(expectedOutput0, observedInput);
-                    firstNode.inputArrivalBit = 0;
-                    firstNode.prevNodeState = s;
-                    firstNode.state = 0;
-                    trellis[t].push_back(firstNode);
-
-                    // case for input 1;
-                    input1 = "001";
-                    expectedOutput1 = to_string(calculateParityC1(input1));
-                    expectedOutput1 += to_string(calculateParityC2(input1));
-                    expectedOutput1 += to_string(calculateParityC3(input1));
-
-                    secondNode.cumHammingDistance += trellis[t-1][s].cumHammingDistance + calculateHammingDistance(expectedOutput1, observedInput);
-                    secondNode.inputArrivalBit = 1;
-                    secondNode.prevNodeState = s;
-                    secondNode.state = 1;
-                    trellis[t].push_back(secondNode);
-                    
-                    break;
-                case 1: // state (0,1)
-                    // case for input 0
-                    input0 = "010";
-                    expectedOutput0 = to_string(calculateParityC1(input0));
-                    expectedOutput0 += to_string(calculateParityC2(input0));
-                    expectedOutput0 += to_string(calculateParityC3(input0));
-
-                    // now need to compare this with the observedInput and calculate the hamming distance
-                    thirdNode.cumHammingDistance += trellis[t-1][s].cumHammingDistance + calculateHammingDistance(expectedOutput0, observedInput);
-                    thirdNode.inputArrivalBit = 0;
-                    thirdNode.prevNodeState = s;
-                    thirdNode.state = 2;
-                    trellis[t].push_back(thirdNode);
-
-                    // case for input 1;
-                    input1 = "011";
-                    expectedOutput1 = to_string(calculateParityC1(input1));
-                    expectedOutput1 += to_string(calculateParityC2(input1));
-                    expectedOutput1 += to_string(calculateParityC3(input1));
-
-                    fourthNode.cumHammingDistance += trellis[t-1][s].cumHammingDistance + calculateHammingDistance(expectedOutput1, observedInput);
-                    fourthNode.inputArrivalBit = 1;
-                    fourthNode.prevNodeState = s;
-                    fourthNode.state = 3;
-                                    
-                    trellis[t].push_back(fourthNode);
-
-
-                    break;
-                case 2: // state (1,0)
-                    // case for input 0
-                    input0 = "100";
-                    expectedOutput0 = to_string(calculateParityC1(input0));
-                    expectedOutput0 += to_string(calculateParityC2(input0));
-                    expectedOutput0 += to_string(calculateParityC3(input0));
-
-                    // now need to compare this with the observedInput and calculate the hamming distance
-                    fifthNode.cumHammingDistance += trellis[t-1][s].cumHammingDistance + calculateHammingDistance(expectedOutput0, observedInput);
-                    fifthNode.inputArrivalBit = 0;
-                    fifthNode.prevNodeState = s;
-                    fifthNode.state = 0;
-                    trellis[t].push_back(fifthNode);
-
-                    // case for input 1;
-                    input1 = "101";
-                    expectedOutput1 = to_string(calculateParityC1(input1));
-                    expectedOutput1 += to_string(calculateParityC2(input1));
-                    expectedOutput1 += to_string(calculateParityC3(input1));
-
-                    sixthNode.cumHammingDistance += trellis[t-1][s].cumHammingDistance + calculateHammingDistance(expectedOutput1, observedInput);
-                    sixthNode.inputArrivalBit = 1;
-                    sixthNode.prevNodeState = s;
-                    sixthNode.state = 1;
-                    trellis[t].push_back(sixthNode);
-
-
-                    break;
-                case 3: // state (1,1)
-                    // case for input 0
-                    input0 = "110";
-                    expectedOutput0 = to_string(calculateParityC1(input0));
-                    expectedOutput0 += to_string(calculateParityC2(input0));
-                    expectedOutput0 += to_string(calculateParityC3(input0));
-
-                    // now need to compare this with the observedInput and calculate the hamming distance
-                    seventhNode.cumHammingDistance += trellis[t-1][s].cumHammingDistance + calculateHammingDistance(expectedOutput0, observedInput);
-                    seventhNode.inputArrivalBit = 0;
-                    seventhNode.prevNodeState = s;
-                    seventhNode.state = 2;
-                    trellis[t].push_back(seventhNode);
-
-                    // case for input 1;
-                    input1 = "111";
-                    expectedOutput1 = to_string(calculateParityC1(input1));
-                    expectedOutput1 += to_string(calculateParityC2(input1));
-                    expectedOutput1 += to_string(calculateParityC3(input1));
-
-                    eigthNode.cumHammingDistance += trellis[t-1][s].cumHammingDistance + calculateHammingDistance(expectedOutput1, observedInput);
-                    eigthNode.inputArrivalBit = 1;
-                    eigthNode.prevNodeState = s;
-                    eigthNode.state = 3;
-                    trellis[t].push_back(eigthNode);
-
-                    break;
-
-                }
-            }
-        }
-
-        //*** PERFORM A CHECK AT THE END OF EACH t AND GET RID OF DUPLICATE NOTES, GET RID OF THE ONE WITH THE HIGHER HAMMING DISTANCE
-       if (t > 2) {
-            for (int i = 0; i < trellis[t].size()-1; i++) {
-                sort(trellis[t].begin(), trellis[t].end()); 
-                if (trellis[t][i].state == trellis[t][i+1].state) {
-                    if (trellis[t][i].cumHammingDistance <= trellis[t][i+1].cumHammingDistance) {
-                        bestPathsAt_t.push_back(trellis[t][i]);
-                    }
-                    else {
-                        bestPathsAt_t.push_back(trellis[t][i+1]);
-                    }
-                }
-            }
-
-            trellis[t] = bestPathsAt_t;
-       }
-    }
-    
+void printTrellisStates(const vector<vector<vNode>> &trellis) {
     for (int i = 0; i < trellis.size(); i++) {
-        // Sort the nodes for this timestep by their state
-        sort(trellis[i].begin(), trellis[i].end());
-        
         cout << "For t = " << i << endl;
         for (int j = 0; j < trellis[i].size(); j++) {
             cout << "Node State: " << trellis[i][j].state 
                 << " Cumulative Hamming Distance: " << trellis[i][j].cumHammingDistance << endl;
         }
     }
+}
 
-
-
-    // Work backwards to figure out the original message
-    //cout << "timeSteps IS IS IS: " << timeSteps << endl;
+string getOriginalCode(const vector<vector<vNode>> &trellis) {
+    string originalCode = "";
     for (int t = timeSteps;t > 0; t--) {
         //cout << "t is: " << t << endl;
         vNode bestPathNode = trellis[t][0];
@@ -511,39 +492,23 @@ string viterbiDecode(string noisy_encoded_code) {
     }
 
     reverse(originalCode.begin(), originalCode.end());
+
     return originalCode;
 }
 
+void removeDuplicatePaths(vector<vector<vNode>> &trellis, int t) {
+    vector<vNode> bestPathsAt_t;
+    for (int i = 0; i < trellis[t].size()-1; i++) {
+                sort(trellis[t].begin(), trellis[t].end()); 
+                if (trellis[t][i].state == trellis[t][i+1].state) {
+                    if (trellis[t][i].cumHammingDistance <= trellis[t][i+1].cumHammingDistance) {
+                        bestPathsAt_t.push_back(trellis[t][i]);
+                    }
+                    else {
+                        bestPathsAt_t.push_back(trellis[t][i+1]);
+                    }
+                }
+            }
 
-
-
-
-int main() {
-
-    // used to get the random number between 0 and 1 when determining when to flip bits
-    srand( (unsigned)time( NULL ) );
-
-    // the code that we want to encode
-    string code = "1010";
-
-
-    // the probability of a single bit flipping after encoding the original code
-    float p = 0.0;
-
-
-
-    cout << "Original Code      -> " << code << endl;
-    string encoded = encode(code);
-    cout << "Encoded Code       -> " << encoded << endl;
-    string noisy_encoded = addNoise(encoded, p);
-    // string s = ""; //debugging
-    // s += "1011";
-    // s += "1101";
-    // s += "0110";
-    cout << "Code After Noise   -> " << noisy_encoded << endl;
-    string originalCode = viterbiDecode(noisy_encoded);
-    cout << "The original code is: " << originalCode;
-
-    return 0;
-
+            trellis[t] = bestPathsAt_t;
 }
