@@ -26,6 +26,8 @@ string addNoise(string code, float prob_of_error);
 void printTrellisStates(const vector<vector<vNode>> &trellis);
 string getOriginalCode(const vector<vector<vNode>> &trellis);
 void removeDuplicatePaths(vector<vector<vNode>> &trellis, int t);
+void generateStates(vector<string>& statesVector, int k);
+string calculatePotentialInput(string curState, int zero_or_one);
 
 enum State {
     STATE_0,  // 0  -> representing (0,0)
@@ -35,6 +37,7 @@ enum State {
 };
 
 int timeSteps = 0;
+vector<string> states = {};
 
 
 // Encode Method
@@ -128,6 +131,8 @@ index 3 will represent state (1,1)
 string viterbiDecode(string noisy_encoded_code, int k) {
     int numStates = pow(2, k-1); 
 
+    generateStates(states, k);
+
     string originalCode = "";
     
 
@@ -162,7 +167,9 @@ string viterbiDecode(string noisy_encoded_code, int k) {
             vNode firstNode, secondNode, thirdNode, fourthNode, fifthNode, sixthNode, seventhNode, eigthNode;
             if (t == 1) {
                 // case for input 0
-                    input0 = "000";
+                    //input0 = "000";
+                    input0 = calculatePotentialInput(states[s], 0);
+                    cout << input0 << endl;
                     expectedOutput0 = calculateParities(input0);
 
 
@@ -174,7 +181,8 @@ string viterbiDecode(string noisy_encoded_code, int k) {
                     trellis[t].push_back(firstNode);
 
                     // case for input 1;
-                    input1 = "001";
+                    input1 = calculatePotentialInput(states[s], 1);
+                    cout << input1 << endl;
                     expectedOutput1 = calculateParities(input1);
 
                     // cout << "Expected for input 1: " << expectedOutput1 << endl;
@@ -192,7 +200,7 @@ string viterbiDecode(string noisy_encoded_code, int k) {
                 switch (s) {
                 case 0: // state (0,0)
                     // case for input 0
-                    input0 = "000";
+                    input0 = calculatePotentialInput(states[s], 0);
                     expectedOutput0 = calculateParities(input0);
 
 
@@ -204,7 +212,7 @@ string viterbiDecode(string noisy_encoded_code, int k) {
                     trellis[t].push_back(firstNode);
 
                     // case for input 1;
-                    input1 = "001";
+                    input1 = calculatePotentialInput(states[s], 1);
                     expectedOutput1 = calculateParities(input1);
 
 
@@ -220,7 +228,7 @@ string viterbiDecode(string noisy_encoded_code, int k) {
                     break;
                 case 1: // state (0,1)
                     // case for input 0
-                    input0 = "010";
+                    input0 = calculatePotentialInput(states[s], 0);
                     expectedOutput0 = calculateParities(input0);
 
 
@@ -232,7 +240,7 @@ string viterbiDecode(string noisy_encoded_code, int k) {
                     trellis[t].push_back(thirdNode);
 
                     // case for input 1;
-                    input1 = "011";
+                    input1 = calculatePotentialInput(states[s], 1);
                     expectedOutput1 = calculateParities(input1);
 
 
@@ -250,7 +258,7 @@ string viterbiDecode(string noisy_encoded_code, int k) {
                 switch (s) {
                 case 0: // state (0,0)
                     // case for input 0
-                    input0 = "000";
+                    input0 = calculatePotentialInput(states[s], 0);
                     expectedOutput0 = calculateParities(input0);
 
 
@@ -262,7 +270,7 @@ string viterbiDecode(string noisy_encoded_code, int k) {
                     trellis[t].push_back(firstNode);
 
                     // case for input 1;
-                    input1 = "001";
+                    input1 = calculatePotentialInput(states[s], 1);
                     expectedOutput1 = calculateParities(input1);
 
 
@@ -275,7 +283,7 @@ string viterbiDecode(string noisy_encoded_code, int k) {
                     break;
                 case 1: // state (0,1)
                     // case for input 0
-                    input0 = "010";
+                    input0 = calculatePotentialInput(states[s], 0);
                     expectedOutput0 = calculateParities(input0);
 
 
@@ -287,7 +295,7 @@ string viterbiDecode(string noisy_encoded_code, int k) {
                     trellis[t].push_back(thirdNode);
 
                     // case for input 1;
-                    input1 = "011";
+                    input1 = calculatePotentialInput(states[s], 1);
                     expectedOutput1 = calculateParities(input1);
 
 
@@ -302,7 +310,7 @@ string viterbiDecode(string noisy_encoded_code, int k) {
                     break;
                 case 2: // state (1,0)
                     // case for input 0
-                    input0 = "100";
+                    input0 = calculatePotentialInput(states[s], 0);
                     expectedOutput0 = calculateParities(input0);
 
 
@@ -314,7 +322,7 @@ string viterbiDecode(string noisy_encoded_code, int k) {
                     trellis[t].push_back(fifthNode);
 
                     // case for input 1;
-                    input1 = "101";
+                    input1 = calculatePotentialInput(states[s], 1);
                     expectedOutput1 = calculateParities(input1);
 
 
@@ -328,7 +336,7 @@ string viterbiDecode(string noisy_encoded_code, int k) {
                     break;
                 case 3: // state (1,1)
                     // case for input 0
-                    input0 = "110";
+                    input0 = calculatePotentialInput(states[s], 0);
                     expectedOutput0 = calculateParities(input0);
 
 
@@ -340,7 +348,7 @@ string viterbiDecode(string noisy_encoded_code, int k) {
                     trellis[t].push_back(seventhNode);
 
                     // case for input 1;
-                    input1 = "111";
+                    input1 = calculatePotentialInput(states[s], 1);
                     expectedOutput1 = calculateParities(input1);
 
 
@@ -394,8 +402,13 @@ int main() {
     // s += "0110";
     //cout << "Code After Noise   -> " << noisy_encoded << endl;
     string originalCode = viterbiDecode("101110011110", k);
-    cout << "The original code is: " << originalCode;
+    cout << "The original code is: " << originalCode << endl;
 
+
+
+    for (string state : states) {
+        cout << state << endl;
+    }
     return 0;
 
 }
@@ -511,4 +524,22 @@ void removeDuplicatePaths(vector<vector<vNode>> &trellis, int t) {
             }
 
             trellis[t] = bestPathsAt_t;
+}
+
+void generateStates(vector<string>& statesVector, int k) {
+    string curState;
+    for (int i = 0; i < pow(2, k-1); i++) {
+        curState = "";
+        // Print each binary number of length `n`
+        for (int bit = k - 2; bit >= 0; bit--) {
+             curState += to_string(((i >> bit) & 1));
+        }
+        statesVector.push_back(curState);
+    }
+}
+
+string calculatePotentialInput(string curState, int zero_or_one) {
+    string input = curState;
+    input += to_string(zero_or_one);
+    return input;
 }
