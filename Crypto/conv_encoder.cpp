@@ -41,80 +41,25 @@ vector<string> states = {};
 
 
 // Encode Method
-// Takes in a 16 bit code and return its encoded version after applying function C1, and C2 over the rolling window
 string encode(string code, int k) { // k is the constraint length i.e length of the shift register we want to use
-
     string encodedVector = "";
     string sliding_window = "";
-
-    // Initializing the slides window that we will use for our C1, C2, C3 parity calculations
-
-    for (int i =0; i < k; i++) {
-        sliding_window += "0";
-    }
-
-    
-    // This is where our sliding window will start from the left of the code, moving to the right, and calculating
-    // the parities using C1, C2, C3 and outputting the results of this calculations to an encoded version of the code
-
-    // In the first iteration of the window, we start with only the most significant bit from the code in the right most register
-    // of the sliding window, with the first two registers initialized to 0
-    // this is what it would look like:
-    // code -> 1010
-    // register starts at [0,0,1] (since 1 is the most significant bit and registers 1 and 2 are still empty)
-
-    // *** FOR C1 FUNCTION ***
-    sliding_window[0] = 0;
-    sliding_window[1] = 0;
-    sliding_window[2] = code[0];
-
-    // add the result of the parity calculation from C1, C2, C3 to the encoded vector
-    encodedVector += calculateParities(sliding_window);
-
-    //cout << "Time Steps was: " << timeSteps << endl;
-    timeSteps += 1;
-    //cout << "Time Steps is now: " << timeSteps << endl;
-
-
-
-    // In the second iteration of the window, we start with  the most significant bit from the code in the second register
-    // of the sliding window, and the bit after the most significant bit in the third register, with the first still being empty
-    // this is what it would look like building off the previous:
-    // register is now [0,1,0] (just shifting the register over now, but notice the first register is still empty since weve only
-    // processed two bits thus far)
-    sliding_window[0] = 0;
-    sliding_window[1] = code[0];
-    sliding_window[2] = code[1];
-
-    // add the result of the parity calculation from C1 to the encoded vector
-    encodedVector += calculateParities(sliding_window);
-
-    //cout << "Time Steps was: " << timeSteps << endl;
-    timeSteps += 1;
-    //cout << "Time Steps is now: " << timeSteps << endl;
-    
-    // encoded_vector.push_back(calculateParityC2(sliding_window));
-
     // Follow this same procedure till every bit is processed
-    for (int i = 2; i < code.size(); i++) {
-        sliding_window[0] = code[i-2];
-        sliding_window[1] = code[i+1-2];
-        sliding_window[2] = code[i+2-2];
+    for (int i = 0; i < code.size(); i++) {
+        sliding_window = "";
+        sliding_window += string(max((k-i-1), 0), '0'); // the registers that are still empty
+        for (int j = 0; j < k - (max((k-i-1), 0));j++) {
+            if (i >= k) {
+                sliding_window += code[j-(k-i-1)];
+            }
+            else {
+                sliding_window += code[j];
+            }
+            
+        }
         encodedVector += calculateParities(sliding_window);
-        // cout << "Time Steps was: " << timeSteps << endl;
         timeSteps += 1;
-        // cout << "Time Steps is now: " << timeSteps << endl;
-
     }
-
-    // so essentially, if our original code was: 1010
-    // Register @ t=0 -> [0,0,1] -> C1 = 1 -> C2 = 0 -> C3 = 0 -> Encoded vector: <1,0,0>
-    // Register @ t=1 -> [0,1,0] -> C1 = 1 -> C2 = 1 -> C3 = 0 -> Encoded vector: <1,0,0,1,1,0>
-    // Register @ t=3 -> [1,0,1] -> C1 = 0 -> C2 = 1 -> C3 = 1 -> Encoded vector: <1,0,0,1,1,0,0,1,1>
-    // Register @ t=3 -> [0,1,0] -> C1 = 1 -> C2 = 1 -> C3 = 0 -> Encoded vector: <1,0,0,1,1,0,0,1,1,1,1,0>
-    // So out final encoding is 100110011110 or <1,0,0,1,1,0,0,1,1,1,1,0>
-
-
     return encodedVector;
 }
 
@@ -395,12 +340,12 @@ int main() {
     cout << "Original Code      -> " << code << endl;
     string encoded = encode(code, k);
     cout << "Encoded Code       -> " << encoded << endl;
-    //string noisy_encoded = addNoise(encoded, p);
-    // string s = ""; //debugging
-    // s += "1011";
-    // s += "1101";
-    // s += "0110";
-    //cout << "Code After Noise   -> " << noisy_encoded << endl;
+    string noisy_encoded = addNoise(encoded, p);
+    string s = ""; //debugging
+    s += "1011";
+    s += "1101";
+    s += "0110";
+    cout << "Code After Noise   -> " << noisy_encoded << endl;
     string originalCode = viterbiDecode("101110011110", k);
     cout << "The original code is: " << originalCode << endl;
 
