@@ -74,7 +74,6 @@ index 3 will represent state (1,1)
 
 // IN PROGRESS
 string viterbiDecode(string noisy_encoded_code, int k) {
-    int numStates = pow(2, k-1); 
 
     generateStates(states, k);
 
@@ -101,9 +100,8 @@ string viterbiDecode(string noisy_encoded_code, int k) {
         // save the input that corresponding to the bit that is read from the noisy message
         string observedInput = noisy_encoded_code.substr(k*(t-1), k);
         //cout << "Observed Input at t = " << t<< " is : " << observedInput << endl;
-        //bestPathsAt_t.clear();
         // for every state
-        for (int s = 0; s < numStates; s++) { // THIS IS HARDCODED TO WORK FOR 4 STATES
+        for (int s = 0; s < states.size(); s++) { // THIS IS HARDCODED TO WORK FOR 4 STATES
         //******** DONT FORGET TO SKIP OVER T = 1 FOR S IS 0 ********************/
             input0 = "";
             input1 = "";
@@ -114,7 +112,6 @@ string viterbiDecode(string noisy_encoded_code, int k) {
                 // case for input 0
                     //input0 = "000";
                     input0 = calculatePotentialInput(states[s], 0);
-                    cout << input0 << endl;
                     expectedOutput0 = calculateParities(input0);
 
 
@@ -127,7 +124,6 @@ string viterbiDecode(string noisy_encoded_code, int k) {
 
                     // case for input 1;
                     input1 = calculatePotentialInput(states[s], 1);
-                    cout << input1 << endl;
                     expectedOutput1 = calculateParities(input1);
 
                     // cout << "Expected for input 1: " << expectedOutput1 << endl;
@@ -345,8 +341,8 @@ int main() {
     s += "1011";
     s += "1101";
     s += "0110";
-    cout << "Code After Noise   -> " << noisy_encoded << endl;
-    string originalCode = viterbiDecode("101110011110", k);
+    cout << "Code After Noise   -> " << s << endl;
+    string originalCode = viterbiDecode(s, k);
     cout << "The original code is: " << originalCode << endl;
 
 
