@@ -38,7 +38,7 @@ enum State {
 
 int timeSteps = 0;
 vector<string> states = {};
-
+vector<vector<vNode>> trellis;
 
 // Encode Method
 string encode(string code, int k) { // k is the constraint length i.e length of the shift register we want to use
@@ -80,8 +80,8 @@ string viterbiDecode(string noisy_encoded_code, int k) {
 
     string originalCode = "";
     
-
-    vector<vector<vNode>> trellis(timeSteps+1);
+    trellis.resize(timeSteps + 1);
+    
     vNode initialNode;
     initialNode.state = 0;
     trellis[0].push_back(initialNode);
@@ -343,10 +343,10 @@ int main() {
     string noisy_encoded = addNoise(encoded, p);
     string s = ""; //debugging
     s += "1011";
-    s += "1101";
-    s += "0110";
-    cout << "Code After Noise   -> " << noisy_encoded << endl;
-    string originalCode = viterbiDecode("101110011110", k);
+    s += "1001";
+    s += "1110";
+    cout << "Code After Noise   -> " << s << endl;
+    string originalCode = viterbiDecode(s, k);
     cout << "The original code is: " << originalCode << endl;
 
 
