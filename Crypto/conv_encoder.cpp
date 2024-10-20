@@ -324,32 +324,42 @@ int main() {
     srand( (unsigned)time( NULL ) );
 
     // the code that we want to encode
-    string code = "1010";
-    int k = 3;
+    // the code that we want to encode
+    string code = "10101010101010101010";
+    int k = 15;
 
 
     // the probability of a single bit flipping after encoding the original code
-    float p = 0.0;
-
-
-
-    cout << "Original Code      -> " << code << endl;
-    string encoded = encode(code, k);
-    cout << "Encoded Code       -> " << encoded << endl;
-    string noisy_encoded = addNoise(encoded, p);
-    string s = ""; //debugging
-    s += "1011";
-    s += "1001";
-    s += "1110";
-    cout << "Code After Noise   -> " << s << endl;
-    string originalCode = viterbiDecode(s, k);
-    cout << "The original code is: " << originalCode << endl;
-
-
-
-    for (string state : states) {
-        cout << state << endl;
+    float p = 0.1;
+    float average_success = 0.0;
+    int total_successes = 0;
+    for (int i = 0; i < 100; i++) {
+        timeSteps = 0;
+        vector<string> states = {};
+        vector<vector<vNode>> trellis;
+        string encoded = encode(code, k);
+        string noisy_encoded = addNoise(encoded, p); //"1101111011110010"; 
+        string originalCode = viterbiDecode(noisy_encoded, k);
+        cout << "---------------------------------------------------------------" << endl;
+        cout << "Original Code      -> " << code << endl;
+        cout << "Encoded Code       -> " << encoded << endl;
+        cout << "Noisy Code         -> " << noisy_encoded << endl;
+        cout << "The original code is: " << originalCode << endl;
+        bool success = (code == originalCode);
+        if (success) {
+            cout << "SUCCESS" << endl;
+            total_successes +=1;
+        }
+        else {
+            cout << "FAIL" << endl;;
+        }
+        cout << "---------------------------------------------------------------" << endl;
+        average_success += success;
     }
+    cout << "Average Success -> " << average_success/100 << endl;
+    cout << total_successes;
+
+
     return 0;
 
 }
