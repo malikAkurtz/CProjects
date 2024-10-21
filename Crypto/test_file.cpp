@@ -21,7 +21,7 @@ struct vNode {
 };
 
 int calculateHammingDistance(string code1, string code2);
-string calculateParities(string shiftregister);
+string generatorPolynomial(string shiftregister);
 string addNoise(string code, float prob_of_error);
 void printTrellisStates(const vector<vector<vNode>> &trellis);
 string getOriginalCode(const vector<vector<vNode>> &trellis);
@@ -53,7 +53,7 @@ string encode(string code, int k) { // k is the constraint length i.e length of 
             }
             
         }
-        encodedVector += calculateParities(sliding_window);
+        encodedVector += generatorPolynomial(sliding_window);
         timeSteps += 1;
     }
     return encodedVector;
@@ -117,7 +117,7 @@ string viterbiDecode(string noisy_encoded_code, int k) {
             if (trellis[t-1][prev_s0].cumHammingDistance != INT_MAX) {
                 //cout << "Previous state for first input is: " << to_string(prev_s0) << endl;
                 string potentialInput0 = calculatePotentialInput(states[prev_s0], transitionBit);
-                string expected0 = calculateParities(potentialInput0);
+                string expected0 = generatorPolynomial(potentialInput0);
                 //cout << "Our expected is:    " << expected0 << endl;
                 //cout << "Our observation is: " << observedInput << endl;
                 int input0HammingDistance = trellis[t-1][prev_s0].cumHammingDistance + calculateHammingDistance(observedInput, expected0);
@@ -134,7 +134,7 @@ string viterbiDecode(string noisy_encoded_code, int k) {
             if (trellis[t-1][prev_s1].cumHammingDistance != INT_MAX) {
                 //cout << "Previous state for second input is: " << to_string(prev_s1) << endl;
                 string potentialInput1 = calculatePotentialInput(states[prev_s1], transitionBit);
-                string expected1 = calculateParities(potentialInput1);
+                string expected1 = generatorPolynomial(potentialInput1);
                 //cout << "Our expected is:    " << expected1 << endl;
                 //cout << "Our observation is: " << observedInput << endl;
                 int input1HammingDistance = trellis[t-1][prev_s1].cumHammingDistance + calculateHammingDistance(observedInput, expected1);
@@ -171,8 +171,8 @@ int main() {
     
     // the probability of ax single bit flipping after encoding the original code
     // p = 0; // LOL
-    // p = 0.01; // Poor channel conditions, severe interference, or far-from-optimal signal quality.
-    p = 0.001; // Moderate noise, common in low-quality wireless connections or basic wired links with interference.
+    p = 0.01; // Poor channel conditions, severe interference, or far-from-optimal signal quality.
+    // p = 0.001; // Moderate noise, common in low-quality wireless connections or basic wired links with interference.
 
     int numIterations = 50;
 
@@ -193,7 +193,8 @@ int main() {
         upperKlimit = 8; // going above 8 will destroy your computer :)
     }
     
-
+    lowerKlimit = 2;
+    upperKlimit = 10;
     map<int, float> k_averages;  // Adjusted to store averages for all possible_k values
 
     // Loop over possible values of k
@@ -282,9 +283,11 @@ int calculateHammingDistance(string code1, string code2) {
     return hammingDistance;
 }
 
-string calculateParities(string shiftregister) {
-    string parityBits = "";
 
+
+string generatorPolynomial(string shiftregister) {
+
+    string parityBits = "";
 
     string registerSubstring;
     int registerParity=0;
@@ -292,11 +295,9 @@ string calculateParities(string shiftregister) {
     // (0,0,0)
 
 
-    for (int i = shiftregister.length(); i > 0; i--) {
-        registerSubstring = shiftregister.substr(0, i);
-        registerParity=0;
-        for (int j = 0; j < registerSubstring.length(); j++) {
-            registerParity = (registerParity + (registerSubstring[j]-'0')) % 2;
+    for (int i = 0; i < shiftregister.length(); i++) {
+        for (int j = 0; j < shiftregister.length(); j++) {
+            registerParity = (registerParity ^ (shiftregister[j]-'0'));
         }
         parityBits += to_string(registerParity);
     }
