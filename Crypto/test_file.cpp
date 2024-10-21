@@ -170,7 +170,7 @@ int main() {
     string code = stringToBinary(message);
     
     // the probability of ax single bit flipping after encoding the original code
-    // p = 0; // LOL
+    p = 0.1; // LOL
     p = 0.01; // Poor channel conditions, severe interference, or far-from-optimal signal quality.
     // p = 0.001; // Moderate noise, common in low-quality wireless connections or basic wired links with interference.
 
@@ -193,8 +193,8 @@ int main() {
         upperKlimit = 8; // going above 8 will destroy your computer :)
     }
     
-    lowerKlimit = 2;
-    upperKlimit = 10;
+    // lowerKlimit = 10;
+    // upperKlimit = 10;
     map<int, float> k_averages;  // Adjusted to store averages for all possible_k values
 
     // Loop over possible values of k
@@ -223,7 +223,7 @@ int main() {
             cout << "---------------------------------------------------------------" << endl;
             cout << "Iteration #" << i + 1 << ":" << endl;
             cout << "K = " << possible_k << endl;
-            cout << "Original Message " << message << endl;
+            cout << "Original Message : " << message << endl;
             cout << "Original Code  : " << code << endl;
             cout << "Encoded Code   : " << encoded << endl;
             cout << "Noisy Code     : " << noisy_encoded << endl;
