@@ -92,8 +92,10 @@ string viterbiDecode(string noisy_encoded_code, int k, vector<string> states, ve
 
     //printTrellisStates(trellis);
 
+
+
     for (int t = 1; t <= timeSteps; t++) {
-        string observedInput = noisy_encoded_code.substr(k*(t-1), k);
+        string observedInput = noisy_encoded_code.substr(codeRate*(t-1), codeRate);
         for (int s = 0; s < states.size(); s++) {
             //cout << "------------------------------------------------------------------------" << endl;
             //cout << "State is: " << s << endl;
@@ -111,13 +113,13 @@ string viterbiDecode(string noisy_encoded_code, int k, vector<string> states, ve
             // for each state we need to see what happens if the input is a 0 or a 1
             int firstPrevState = (std::stoi(states[s], nullptr, 2) >> 1);
             if (trellis[t-1][firstPrevState].cumHammingDistance != INT_MAX) {
-                cout << "Previous state for first input is: " << to_string(firstPrevState) << endl;
+                // cout << "Previous state for first input is: " << to_string(firstPrevState) << endl;
                 string firstPotentialInput = calculatePotentialInput(states[firstPrevState], transitionBit);
                 string firstExpected = generateOutput(firstPotentialInput, genPolynomial, codeRate);
-                cout << "Our expected is:    " << firstExpected << endl;
-                cout << "Our observation is: " << observedInput << endl;
+                // cout << "Our expected is:    " << firstExpected << endl;
+                // cout << "Our observation is: " << observedInput << endl;
                 int firstHammingDistance = trellis[t-1][firstPrevState].cumHammingDistance + calculateHammingDistance(observedInput, firstExpected);
-                cout << "So the cumulative hamming distance would be: " << firstHammingDistance << endl;
+                // cout << "So the cumulative hamming distance would be: " << firstHammingDistance << endl;
                 if (firstHammingDistance < trellis[t][s].cumHammingDistance) {
                     trellis[t][s].cumHammingDistance = firstHammingDistance;
                     trellis[t][s].inputArrivalBit = transitionBit;
@@ -127,13 +129,13 @@ string viterbiDecode(string noisy_encoded_code, int k, vector<string> states, ve
 
             int secondPrevState = ((std::stoi(states[s], nullptr, 2) >> 1) | (1 << (k-2)));
             if (trellis[t-1][secondPrevState].cumHammingDistance != INT_MAX) {
-                cout << "Previous state for second input is: " << to_string(secondPrevState) << endl;
+                // cout << "Previous state for second input is: " << to_string(secondPrevState) << endl;
                 string secondPotentialInput = calculatePotentialInput(states[secondPrevState], transitionBit);
                 string secondExpected = generateOutput(secondPotentialInput, genPolynomial, codeRate);
-                cout << "Our expected is:    " << secondExpected << endl;
-                cout << "Our observation is: " << observedInput << endl;
+                // cout << "Our expected is:    " << secondExpected << endl;
+                // cout << "Our observation is: " << observedInput << endl;
                 int secondHammingDistance = trellis[t-1][secondPrevState].cumHammingDistance + calculateHammingDistance(observedInput, secondExpected);
-                cout << "So the cumulative hamming distance would be: " << secondHammingDistance << endl;
+                //cout << "So the cumulative hamming distance would be: " << secondHammingDistance << endl;
                 if (secondHammingDistance < trellis[t][s].cumHammingDistance) {
                     trellis[t][s].cumHammingDistance = secondHammingDistance;
                     trellis[t][s].inputArrivalBit = transitionBit;
@@ -143,7 +145,7 @@ string viterbiDecode(string noisy_encoded_code, int k, vector<string> states, ve
         }
     }
 
-    printTrellisStates(trellis);
+    // printTrellisStates(trellis);
 
     return getOriginalCode(trellis);
 }
@@ -159,14 +161,17 @@ int main() {
     int codeRate;
 
     // used to get the random number between 0 and 1 when determining when to flip bits
-    srand( (unsigned)time( NULL ) );
+    unsigned int seed = 12345;  // Replace 12345 with any specific seed you want
+    srand(seed);
+    // srand( (unsigned)time( NULL ) );
 
     // the code that we want to encode
     string message;
     getline(cin, message);
-
     string code = stringToBinary(message);
-    //string code = "1010";
+
+
+    // string code = "1010";
     
     // the probability of ax single bit flipping after encoding the original code
     p = 0.1; // LOL
@@ -193,6 +198,9 @@ int main() {
         upperKlimit = 8; // going above 8 will destroy your computer :)
     }
 
+
+    // lowerKlimit = 8;
+    // upperKlimit = 8;
     map<int, float> k_averages;  // Adjusted to store averages for all possible_k values
 
     // Loop over possible values of k
@@ -207,11 +215,11 @@ int main() {
         // Perform multiple iterations for each k value
         for (int i = 0; i < numIterations; i++) {
             // Reset the environment for each iteration
-            codeRate = 3; // 3 output bits per input bits
+            codeRate = possible_k; // output bits per input bit
             possibleStates = generateStates(possible_k);
             timeSteps = 0;
             trellis.clear();
-            generatorPolynomial = {};
+            generatorPolynomial = {}; // degree should always be less than or equal to k-1
             // Default generator polynomial for every iteration will just be the polynomial 1 + x^1 + ... + x^k-1
             for (int i = 0; i < possible_k; i++) {
                 generatorPolynomial.push_back(1);
@@ -224,11 +232,22 @@ int main() {
             string noisy_encoded = addNoise(encoded, p);
             string originalCode = viterbiDecode(noisy_encoded, possible_k, possibleStates, generatorPolynomial, codeRate);
             string originalMessage = binaryToString(originalCode);
+            // string originalMessage = originalCode;
 
             // Displaying results for each iteration
             cout << "---------------------------------------------------------------" << endl;
             cout << "Iteration #" << i + 1 << ":" << endl;
             cout << "K = " << possible_k << endl;
+            cout << "Output Bits per Input Bit: " << codeRate << endl;
+            cout << "Generator Polynomial: [ ";
+            for (int i = 0; i < generatorPolynomial.size();i++) {
+                if (!(i == generatorPolynomial.size() -1)) {
+                    cout << generatorPolynomial[i] << ", ";
+                }
+                else {
+                    cout << generatorPolynomial[i];
+                }
+            } cout << " ]" << endl;
             cout << "Original Message : " << message << endl;
             cout << "Original Code  : " << code << endl;
             cout << "Encoded Code   : " << encoded << endl;
