@@ -161,7 +161,8 @@ int main() {
     int upperKlimit;
 
     // used to get the random number between 0 and 1 when determining when to flip bits
-    srand( (unsigned)time( NULL ) );
+    unsigned int seed = 12345;  // Replace 12345 with any specific seed you want
+    srand(seed);
 
     // the code that we want to encode
     string message;

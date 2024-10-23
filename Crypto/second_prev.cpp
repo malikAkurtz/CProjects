@@ -215,7 +215,7 @@ int main() {
         // Perform multiple iterations for each k value
         for (int i = 0; i < numIterations; i++) {
             // Reset the environment for each iteration
-            codeRate = possible_k; // output bits per input bit
+            codeRate = 10; // output bits per input bit
             possibleStates = generateStates(possible_k);
             timeSteps = 0;
             trellis.clear();

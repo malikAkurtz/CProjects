@@ -216,7 +216,7 @@ int main() {
         // Perform multiple iterations for each k value
         for (int i = 0; i < numIterations; i++) {
             // Reset the environment for each iteration
-            vector<vector<int>> generatorPolynomials(possible_k); // hardcoding generator polynomials i.e 3 output bits that will be autofilled later
+            vector<vector<int>> generatorPolynomials(10); // hardcoding generator polynomials i.e 3 output bits that will be autofilled later
             possibleStates = generateStates(possible_k);
             timeSteps = 0;
             trellis.clear();
