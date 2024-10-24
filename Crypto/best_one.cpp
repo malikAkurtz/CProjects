@@ -163,6 +163,8 @@ int main() {
     int upperKlimit;
     int outputBits;
     string exportFile = "results.csv";
+    int generatorPolynomial;
+
     // degree of any gen polynomial should always be less than or equal to k-1
     vector<string> possibleStates;
 
@@ -184,8 +186,8 @@ int main() {
     p = 0.1; // LOL
     p = 0.01; // Poor channel conditions, severe interference, or far-from-optimal signal quality.
     // p = 0.001; // Moderate noise, common in low-quality wireless connections or basic wired links with interference.
-    p = 0.1;
-    int numIterations = 50;
+    p = 0.05;
+    int numIterations = 100;
 
     if (code.length() < 10) {
         lowerKlimit = 2;
@@ -205,15 +207,27 @@ int main() {
     }
 
 
-    // lowerKlimit = 2;
-    // upperKlimit = 8;
+    lowerKlimit = 2;
+    upperKlimit = 8;
     outputBits = 10;
+    
     map<int, float> k_averages;  // Adjusted to store averages for all possible_k values
 
     // Loop over possible values of k
     for (int possible_k = lowerKlimit; possible_k <= upperKlimit; possible_k++) {
         float average_success = 0.0;
         int total_successes = 0;
+
+        vector<vector<int>> generatorPolynomials(outputBits); // hardcoding generator polynomials i.e 3 output bits that will be autofilled later
+
+        // Default generator polynomial for every k will just be the polynomial 1 + x^1 + ... + x^k-1
+        for (int i = 0; i < generatorPolynomials.size(); i++) {
+            generatorPolynomials[i].clear();
+            for (int j = 0; j < possible_k; j++) {
+                generatorPolynomials[i].push_back(1);
+            }
+        }
+        possibleStates = generateStates(possible_k);
 
         cout << "===============================================================" << endl;
         cout << "Processing for k = " << possible_k << " (" << numIterations << " iterations)" << endl;
@@ -222,21 +236,10 @@ int main() {
         // Perform multiple iterations for each k value
         for (int i = 0; i < numIterations; i++) {
             // Reset the environment for each iteration
-            vector<vector<int>> generatorPolynomials(outputBits); // hardcoding generator polynomials i.e 3 output bits that will be autofilled later
-            possibleStates = generateStates(possible_k);
             timeSteps = 0;
             trellis.clear();
             
-            // Default generator polynomial for every iteration will just be the polynomial 1 + x^1 + ... + x^k-1
-            for (int i = 0; i < generatorPolynomials.size(); i++) {
-                generatorPolynomials[i].clear();
-                for (int j = 0; j < possible_k; j++) {
-                    generatorPolynomials[i].push_back(1);
-                }
-            }
-
-
-
+ 
             // Encoding, adding noise, and decoding
             string encoded = encode(code, possible_k, generatorPolynomials);
             string noisy_encoded = addNoise(encoded, p);
@@ -248,26 +251,6 @@ int main() {
             cout << "---------------------------------------------------------------" << endl;
             cout << "Iteration #" << i + 1 << ":" << endl;
             cout << "K = " << possible_k << endl;
-            cout << "Generator Polynomials: [ ";
-            // for every generator polynomial
-            for (int i = 0; i < generatorPolynomials.size(); i++) {
-                // print the opening bracket for each polynomial
-                cout << "[ ";
-                
-                // for every term in the polynomial
-                for (int j = 0; j < generatorPolynomials[i].size(); j++) {
-                    // print the term
-                    cout << generatorPolynomials[i][j];
-                    
-                    // if this is not the last term in the polynomial, print a comma and space
-                    if (j != generatorPolynomials[i].size() - 1) {
-                        cout << ", ";
-                    }
-                }
-                
-                // close the bracket for the current polynomial
-                cout << " ]";
-            } cout << " ]";
 
             // print a newline after all polynomials have been printed
             cout << endl;
@@ -298,6 +281,26 @@ int main() {
 
         cout << "===============================================================" << endl;
         cout << "Summary for k = " << possible_k << ":" << endl;
+        cout << "Generator Polynomials: [ ";
+            // for every generator polynomial
+            for (int i = 0; i < generatorPolynomials.size(); i++) {
+                // print the opening bracket for each polynomial
+                cout << "[ ";
+                
+                // for every term in the polynomial
+                for (int j = 0; j < generatorPolynomials[i].size(); j++) {
+                    // print the term
+                    cout << generatorPolynomials[i][j];
+                    
+                    // if this is not the last term in the polynomial, print a comma and space
+                    if (j != generatorPolynomials[i].size() - 1) {
+                        cout << ", ";
+                    }
+                }
+                
+                // close the bracket for the current polynomial
+                cout << " ]";
+            } cout << " ]";
         cout << "Total Successes: " << total_successes << " / " << numIterations << endl;
         cout << "Average Success: " << success_rate * 100 << "% success rate" << endl;
         cout << "===============================================================" << endl << endl;
