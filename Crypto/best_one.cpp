@@ -8,6 +8,8 @@
 #include <cmath>
 #include <map>
 #include <bitset>
+#include <fstream>
+
 using namespace std;
 
 struct vNode {
@@ -20,16 +22,17 @@ struct vNode {
     }
 };
 
-int calculateHammingDistance(string code1, string code2);
-string generateOutput(string shiftregister, vector<vector<int>> genPolynomials);
-string addNoise(string code, float prob_of_error);
+int calculateHammingDistance(string& code1, string& code2);
+string generateOutput(string& shiftregister, vector<vector<int>>& genPolynomials);
+string addNoise(string& code, float prob_of_error);
 void printTrellisStates(const vector<vector<vNode>> &trellis);
 string getOriginalCode(const vector<vector<vNode>> &trellis);
 void removeDuplicatePaths(vector<vector<vNode>> &trellis, int t);
 vector<string> generateStates(int k);
-string calculatePotentialInput(string curState, int zero_or_one);
+string calculatePotentialInput(string& curState, int zero_or_one);
 string stringToBinary(string& message);
 string binaryToString(string& binary);
+void exportData(map<int, float>& k_data_points, string& filename);
 
 
 int timeSteps = 0;
@@ -158,6 +161,8 @@ int main() {
     float p;
     int lowerKlimit;
     int upperKlimit;
+    int outputBits;
+    string exportFile = "results.csv";
     // degree of any gen polynomial should always be less than or equal to k-1
     vector<string> possibleStates;
 
@@ -200,8 +205,9 @@ int main() {
     }
 
 
-    // lowerKlimit = 8;
+    // lowerKlimit = 2;
     // upperKlimit = 8;
+    outputBits = 10;
     map<int, float> k_averages;  // Adjusted to store averages for all possible_k values
 
     // Loop over possible values of k
@@ -216,7 +222,7 @@ int main() {
         // Perform multiple iterations for each k value
         for (int i = 0; i < numIterations; i++) {
             // Reset the environment for each iteration
-            vector<vector<int>> generatorPolynomials(10); // hardcoding generator polynomials i.e 3 output bits that will be autofilled later
+            vector<vector<int>> generatorPolynomials(outputBits); // hardcoding generator polynomials i.e 3 output bits that will be autofilled later
             possibleStates = generateStates(possible_k);
             timeSteps = 0;
             trellis.clear();
@@ -261,7 +267,7 @@ int main() {
                 
                 // close the bracket for the current polynomial
                 cout << " ]";
-            }
+            } cout << " ]";
 
             // print a newline after all polynomials have been printed
             cout << endl;
@@ -300,17 +306,20 @@ int main() {
     // Final summary of all k values
     cout << "===================== Overall Results =====================" << endl;
     cout << "Noise was: " << p << endl;
+    cout << "Original message was: " << message << endl;
     cout << "Message length was: " << code.length() << endl;
+    cout << "Output Bits per input: " << outputBits << endl;
     for (int i = lowerKlimit; i <= upperKlimit; i++) {
         cout << "For k = " << i << " -> Average Success = " << k_averages[i] * 100 << "%" << endl;
     }
     cout << "===========================================================" << endl;
 
+    exportData(k_averages, exportFile);
     return 0;
 }
 
 
-int calculateHammingDistance(string code1, string code2) {
+int calculateHammingDistance(string& code1, string& code2) {
     if (code1.length() != code2.length()) {
         return -1;
     }
@@ -327,7 +336,7 @@ int calculateHammingDistance(string code1, string code2) {
 
 
 
-string generateOutput(string shiftregister, vector<vector<int>> genPolynomials) {
+string generateOutput(string& shiftregister, vector<vector<int>>& genPolynomials) {
 
     string parityBits = "";
 
@@ -352,7 +361,7 @@ string generateOutput(string shiftregister, vector<vector<int>> genPolynomials) 
     return parityBits; 
 }
 
-string addNoise(string code, float prob_of_error) {
+string addNoise(string& code, float prob_of_error) {
 
     string noisyEncoded = "";
     
@@ -440,7 +449,7 @@ vector<string> generateStates(int k) {
     return statesVector;
 }
 
-string calculatePotentialInput(string curState, int next_input) {
+string calculatePotentialInput(string& curState, int next_input) {
     string input = curState;
     input += to_string(next_input);
     return input;
@@ -463,4 +472,16 @@ string binaryToString(string& binary) {
     }
 
     return stringBinary;
+}
+
+void exportData(map<int, float>& k_data_points, string& filename) {
+    ofstream file(filename);
+    if (file.is_open()) {
+        file << "K, Success Rate\n";
+        for (auto& entry : k_data_points) {
+            file << entry.first << "," << entry.second * 100 << "\n";
+        }
+        file.close();
+    }
+
 }
