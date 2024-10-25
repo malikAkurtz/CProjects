@@ -207,9 +207,9 @@ int main() {
     }
 
 
-    lowerKlimit = 2;
-    upperKlimit = 8;
-    outputBits = 10;
+    lowerKlimit = 5;
+    upperKlimit = 7;
+    outputBits = 3;
     
     map<int, float> k_averages;  // Adjusted to store averages for all possible_k values
 
