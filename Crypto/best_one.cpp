@@ -184,7 +184,7 @@ int main() {
     p = 0.1; // LOL
     p = 0.01; // Poor channel conditions, severe interference, or far-from-optimal signal quality.
     // p = 0.001; // Moderate noise, common in low-quality wireless connections or basic wired links with interference.
-    p = 0.05;
+    p = 0.01;
     int numIterations = 100;
 
 
@@ -223,17 +223,17 @@ int main() {
         else if (possible_k == 6) {
             generatorPolynomials.push_back(0x12);
             generatorPolynomials.push_back(0x12);
-            generatorPolynomials.push_back(0x12);
+            generatorPolynomials.push_back(0x15);
         }
         else if (possible_k == 7) {
             generatorPolynomials.push_back(0x33);
             generatorPolynomials.push_back(0x33);
-            generatorPolynomials.push_back(0x33);
+            generatorPolynomials.push_back(0x23);
         }
         else if (possible_k == 8) {
             generatorPolynomials.push_back(0x65);
             generatorPolynomials.push_back(0x65);
-            generatorPolynomials.push_back(0x65);
+            generatorPolynomials.push_back(0x5b);
         }
         float average_success = 0.0;
         int total_successes = 0;
@@ -311,24 +311,6 @@ int main() {
     return 0;
 }
 
-
-
-int main1() {
-    int k = 1;
-    vector<string> states = generateStates(k);
-    string code = "10001000100001110000";
-    // for implicit +1 notation, the degree of the generator polynomial must be <= k+1
-    vector<unsigned int> genp = {0x5}; // implicit +1 notation i.e 101 -> 1 + x + x^3 -> will only work for k >= 4 (highest degree in the polynomial)
-    string encoded = encode(code, k, genp);
-    cout << encoded << endl;
-    string decoded = viterbiDecode(encoded, k, states, genp);
-    cout << code << endl;
-    cout << decoded << endl;
-
-
-
-    return 0;
-}
 
 
 int calculateHammingDistance(string& code1, string& code2) {
