@@ -23,7 +23,7 @@ struct vNode {
 };
 
 int calculateHammingDistance(string& code1, string& code2);
-string generateOutput(string& shiftregister, vector<unsigned int>& genPolynomials, int outputBits);
+string generateOutput(string& shiftregister, vector<unsigned int>& genPolynomials);
 string addNoise(string& code, float prob_of_error);
 void printTrellisStates(const vector<vector<vNode>> &trellis);
 string getOriginalCode(const vector<vector<vNode>> &trellis);
@@ -39,7 +39,7 @@ int timeSteps = 0;
 vector<vector<vNode>> trellis;
 
 // // Encode Method
-string encode(string code, int k, vector<unsigned int> genPolynomials, int outputBits) { // k is the constraint length i.e length of the shift register we want to use
+string encode(string code, int k, vector<unsigned int> genPolynomials) { // k is the constraint length i.e length of the shift register we want to use
     string encodedVector = "";
     string sliding_window = "";
     // Follow this same procedure till every bit is processed
@@ -55,7 +55,7 @@ string encode(string code, int k, vector<unsigned int> genPolynomials, int outpu
             }
             
         }
-        encodedVector += generateOutput(sliding_window, genPolynomials, outputBits);
+        encodedVector += generateOutput(sliding_window, genPolynomials);
         timeSteps += 1;
     }
     return encodedVector;
@@ -71,11 +71,11 @@ index 3 will represent state (1,1)
 
 
 // // IN PROGRESS
-string viterbiDecode(string noisy_encoded_code, int k, vector<string> states, vector<unsigned int> genPolynomials, int outputBits) {
+string viterbiDecode(string noisy_encoded_code, int k, vector<string> states, vector<unsigned int> genPolynomials) {
 
     string originalCode = "";
     
-
+    int outputBits = genPolynomials.size();
     trellis.resize(timeSteps + 1);
     
     //initialize the only node at t = 0 (0,0)
@@ -119,7 +119,7 @@ string viterbiDecode(string noisy_encoded_code, int k, vector<string> states, ve
             if (trellis[t-1][firstPrevState].cumHammingDistance != INT_MAX) {
                 // cout << "Previous state for first input is: " << to_string(firstPrevState) << endl;
                 string firstPotentialInput = calculatePotentialInput(states[firstPrevState], transitionBit);
-                string firstExpected = generateOutput(firstPotentialInput, genPolynomials, outputBits);
+                string firstExpected = generateOutput(firstPotentialInput, genPolynomials);
                 // cout << "Our expected is:    " << firstExpected << endl;
                 // cout << "Our observation is: " << observedInput << endl;
                 int firstHammingDistance = trellis[t-1][firstPrevState].cumHammingDistance + calculateHammingDistance(observedInput, firstExpected);
@@ -135,7 +135,7 @@ string viterbiDecode(string noisy_encoded_code, int k, vector<string> states, ve
             if (trellis[t-1][secondPrevState].cumHammingDistance != INT_MAX) {
                 // cout << "Previous state for second input is: " << to_string(secondPrevState) << endl;
                 string secondPotentialInput = calculatePotentialInput(states[secondPrevState], transitionBit);
-                string secondExpected = generateOutput(secondPotentialInput, genPolynomials, outputBits);
+                string secondExpected = generateOutput(secondPotentialInput, genPolynomials);
                 // cout << "Our expected is:    " << secondExpected << endl;
                 // cout << "Our observation is: " << observedInput << endl;
                 int secondHammingDistance = trellis[t-1][secondPrevState].cumHammingDistance + calculateHammingDistance(observedInput, secondExpected);
@@ -156,152 +156,172 @@ string viterbiDecode(string noisy_encoded_code, int k, vector<string> states, ve
 
 
 
-// int main() {
-//     float p;
-//     int lowerKlimit;
-//     int upperKlimit;
-//     int outputBits;
-//     string exportFile = "results.csv";
-//     vector<unsigned int> generatorPolynomials;
-
-//     // degree of any gen polynomial should always be less than or equal to k-1
-//     vector<string> possibleStates;
-
-//     // used to get the random number between 0 and 1 when determining when to flip bits
-//     unsigned int seed = 12345;  // Replace 12345 with any specific seed you want
-//     srand(seed);
-//     // srand( (unsigned)time( NULL ) );
-
-//     // the code that we want to encode
-//     string message;
-//     getline(cin, message);
-//     string code = stringToBinary(message);
-
-//     // string code = "1010";
-
-//     // string code = "1010";
-    
-//     // the probability of ax single bit flipping after encoding the original code
-//     p = 0.1; // LOL
-//     p = 0.01; // Poor channel conditions, severe interference, or far-from-optimal signal quality.
-//     // p = 0.001; // Moderate noise, common in low-quality wireless connections or basic wired links with interference.
-//     p = 0.05;
-//     int numIterations = 100;
-
-//     if (code.length() < 10) {
-//         lowerKlimit = 2;
-//         upperKlimit = 3;
-//     }
-//     else if (code.length() < 50) {
-//         lowerKlimit = 3;
-//         upperKlimit = 5;
-//     }
-//     else if (code.length() < 100) {
-//         lowerKlimit = 5;
-//         upperKlimit = 7;
-//     }
-//     else {
-//         lowerKlimit = 7;
-//         upperKlimit = 8; // going above 8 will destroy your computer :)
-//     }
-
-
-//     lowerKlimit = 2;
-//     upperKlimit = 8;
-//     outputBits = 10;
-    
-//     map<int, float> k_averages;  // Adjusted to store averages for all possible_k values
-
-//     // Loop over possible values of k
-//     for (int possible_k = lowerKlimit; possible_k <= upperKlimit; possible_k++) {
-//         float average_success = 0.0;
-//         int total_successes = 0;
-
-//         possibleStates = generateStates(possible_k);
-
-//         cout << "===============================================================" << endl;
-//         cout << "Processing for k = " << possible_k << " (" << numIterations << " iterations)" << endl;
-//         cout << "===============================================================" << endl;
-
-//         // Perform multiple iterations for each k value
-//         for (int i = 0; i < numIterations; i++) {
-//             // Reset the environment for each iteration
-//             timeSteps = 0;
-//             trellis.clear();
-//             generatorPolynomials = {0x5};
- 
-//             // Encoding, adding noise, and decoding
-//             string encoded = encode(code, possible_k, generatorPolynomials, outputBits);
-//             string noisy_encoded = addNoise(encoded, p);
-//             string originalCode = viterbiDecode(noisy_encoded, possible_k, possibleStates, generatorPolynomials, outputBits);
-//             string originalMessage = binaryToString(originalCode);
-//             // string originalMessage = originalCode;
-
-//             // Displaying results for each iteration
-//             cout << "---------------------------------------------------------------" << endl;
-//             cout << "Iteration #" << i + 1 << ":" << endl;
-//             cout << "K = " << possible_k << endl;
-
-//             // print a newline after all polynomials have been printed
-//             cout << endl;
-//             cout << "Original Message : " << message << endl;
-//             cout << "Original Code  : " << code << endl;
-//             cout << "Encoded Code   : " << encoded << endl;
-//             cout << "Noisy Code     : " << noisy_encoded << endl;
-//             cout << "Noise Added?   : " << (noisy_encoded == encoded ? "No" : "Yes") << endl;
-//             cout << "Number of bits flipped: " << calculateHammingDistance(encoded,noisy_encoded) << endl;
-//             cout << "Decoded Code   : " << originalCode << endl;
-//             cout << "Decoded Message: " << originalMessage << endl;
-
-//             bool success = (code == originalCode);
-//             if (success) {
-//                 cout << "Result         : SUCCESS" << endl;
-//                 total_successes += 1;
-//             } else {
-//                 cout << "Result         : FAIL" << endl;
-//             }
-//             cout << "---------------------------------------------------------------" << endl;
-
-//             average_success += success;
-//         }
-
-//         // Calculate and display the success rate for this k value
-//         float success_rate = (average_success / numIterations);
-//         k_averages[possible_k] = success_rate;
-
-//         cout << "===============================================================" << endl;
-//         cout << "Summary for k = " << possible_k << ":" << endl;
-//         cout << "Total Successes: " << total_successes << " / " << numIterations << endl;
-//         cout << "Average Success: " << success_rate * 100 << "% success rate" << endl;
-//         cout << "===============================================================" << endl << endl;
-//     }
-
-//     // Final summary of all k values
-//     cout << "===================== Overall Results =====================" << endl;
-//     cout << "Noise was: " << p << endl;
-//     cout << "Original message was: " << message << endl;
-//     cout << "Message length was: " << code.length() << endl;
-//     cout << "Output Bits per input: " << outputBits << endl;
-//     for (int i = lowerKlimit; i <= upperKlimit; i++) {
-//         cout << "For k = " << i << " -> Average Success = " << k_averages[i] * 100 << "%" << endl;
-//     }
-//     cout << "===========================================================" << endl;
-
-//     exportData(k_averages, exportFile);
-//     return 0;
-// }
-
-
-
 int main() {
-    int k = 3;
+    float p;
+    int lowerKlimit;
+    int upperKlimit;
+    string exportFile = "results.csv";
+    vector<unsigned int> generatorPolynomials;
+
+    // degree of any gen polynomial should always be less than or equal to k-1
+    vector<string> possibleStates;
+
+    // used to get the random number between 0 and 1 when determining when to flip bits
+    unsigned int seed = 12345;  // Replace 12345 with any specific seed you want
+    srand(seed);
+    // srand( (unsigned)time( NULL ) );
+
+    // the code that we want to encode
+    string message;
+    getline(cin, message);
+    string code = stringToBinary(message);
+
+    // string code = "1010";
+
+    // string code = "1010";
+    
+    // the probability of ax single bit flipping after encoding the original code
+    p = 0.1; // LOL
+    p = 0.01; // Poor channel conditions, severe interference, or far-from-optimal signal quality.
+    // p = 0.001; // Moderate noise, common in low-quality wireless connections or basic wired links with interference.
+    p = 0.05;
+    int numIterations = 100;
+
+
+    if (code.length() < 50) {
+        lowerKlimit = 4;
+        upperKlimit = 5;
+    }
+    else if (code.length() < 100) {
+        lowerKlimit = 5;
+        upperKlimit = 7;
+    }
+    else {
+        lowerKlimit = 7;
+        upperKlimit = 8; // going above 8 will destroy your computer :)
+    }
+
+
+    // lowerKlimit = 4;
+    // upperKlimit = 8;
+    
+    map<int, float> k_averages;  // Adjusted to store averages for all possible_k values
+
+    // Loop over possible values of k
+    for (int possible_k = lowerKlimit; possible_k <= upperKlimit; possible_k++) {
+        generatorPolynomials.clear();
+        if (possible_k == 4) {
+            generatorPolynomials.push_back(0x5);
+            generatorPolynomials.push_back(0x5);
+            generatorPolynomials.push_back(0x5);
+        }
+        else if (possible_k == 5) {
+            generatorPolynomials.push_back(0x9);
+            generatorPolynomials.push_back(0x9);
+            generatorPolynomials.push_back(0x9);
+        }
+        else if (possible_k == 6) {
+            generatorPolynomials.push_back(0x12);
+            generatorPolynomials.push_back(0x12);
+            generatorPolynomials.push_back(0x12);
+        }
+        else if (possible_k == 7) {
+            generatorPolynomials.push_back(0x33);
+            generatorPolynomials.push_back(0x33);
+            generatorPolynomials.push_back(0x33);
+        }
+        else if (possible_k == 8) {
+            generatorPolynomials.push_back(0x65);
+            generatorPolynomials.push_back(0x65);
+            generatorPolynomials.push_back(0x65);
+        }
+        float average_success = 0.0;
+        int total_successes = 0;
+
+        possibleStates = generateStates(possible_k);
+
+        cout << "===============================================================" << endl;
+        cout << "Processing for k = " << possible_k << " (" << numIterations << " iterations)" << endl;
+        cout << "===============================================================" << endl;
+
+        // Perform multiple iterations for each k value
+        for (int i = 0; i < numIterations; i++) {
+            // Reset the environment for each iteration
+            timeSteps = 0;
+            trellis.clear();
+ 
+            // Encoding, adding noise, and decoding
+            string encoded = encode(code, possible_k, generatorPolynomials);
+            string noisy_encoded = addNoise(encoded, p);
+            string originalCode = viterbiDecode(noisy_encoded, possible_k, possibleStates, generatorPolynomials);
+            string originalMessage = binaryToString(originalCode);
+            // string originalMessage = originalCode;
+
+            // Displaying results for each iteration
+            cout << "---------------------------------------------------------------" << endl;
+            cout << "Iteration #" << i + 1 << ":" << endl;
+            cout << "K = " << possible_k << endl;
+
+            // print a newline after all polynomials have been printed
+            cout << endl;
+            cout << "Original Message : " << message << endl;
+            cout << "Original Code  : " << code << endl;
+            cout << "Encoded Code   : " << encoded << endl;
+            cout << "Noisy Code     : " << noisy_encoded << endl;
+            cout << "Noise Added?   : " << (noisy_encoded == encoded ? "No" : "Yes") << endl;
+            cout << "# bits flipped: " << calculateHammingDistance(encoded,noisy_encoded) << endl;
+            cout << "Decoded Code   : " << originalCode << endl;
+            cout << "Decoded Message: " << originalMessage << endl;
+
+            bool success = (code == originalCode);
+            if (success) {
+                cout << "Result         : SUCCESS" << endl;
+                total_successes += 1;
+            } else {
+                cout << "Result         : FAIL" << endl;
+            }
+            cout << "---------------------------------------------------------------" << endl;
+
+            average_success += success;
+        }
+
+        // Calculate and display the success rate for this k value
+        float success_rate = (average_success / numIterations);
+        k_averages[possible_k] = success_rate;
+
+        cout << "===============================================================" << endl;
+        cout << "Summary for k = " << possible_k << ":" << endl;
+        cout << "Total Successes: " << total_successes << " / " << numIterations << endl;
+        cout << "Average Success: " << success_rate * 100 << "% success rate" << endl;
+        cout << "===============================================================" << endl << endl;
+    }
+
+    // Final summary of all k values
+    cout << "===================== Overall Results =====================" << endl;
+    cout << "Noise was: " << p << endl;
+    cout << "Original message was: " << message << endl;
+    cout << "Message length was: " << code.length() << endl;
+    // cout << "Output Bits per input: " << outputBits << endl;
+    for (int i = lowerKlimit; i <= upperKlimit; i++) {
+        cout << "For k = " << i << " -> Average Success = " << k_averages[i] * 100 << "%" << endl;
+    }
+    cout << "===========================================================" << endl;
+
+    exportData(k_averages, exportFile);
+    return 0;
+}
+
+
+
+int main1() {
+    int k = 1;
     vector<string> states = generateStates(k);
-    string code = "101011100010111";
-    vector<unsigned int> genp = {0x5};
-    int op = 10;
-    string encoded = encode(code, k, genp, op);
+    string code = "10001000100001110000";
+    // for implicit +1 notation, the degree of the generator polynomial must be <= k+1
+    vector<unsigned int> genp = {0x5}; // implicit +1 notation i.e 101 -> 1 + x + x^3 -> will only work for k >= 4 (highest degree in the polynomial)
+    string encoded = encode(code, k, genp);
     cout << encoded << endl;
-    string decoded = viterbiDecode(encoded, k, states, genp, op);
+    string decoded = viterbiDecode(encoded, k, states, genp);
     cout << code << endl;
     cout << decoded << endl;
 
@@ -326,28 +346,32 @@ int calculateHammingDistance(string& code1, string& code2) {
     return hammingDistance;
 }
 
-string generateOutput(string& shiftregister, vector<unsigned int>& genPolynomials, int outputBits) {
+string generateOutput(string& shiftregister, vector<unsigned int>& genPolynomials) {
+    int k = shiftregister.length();
 
     string parityBits = "";
 
 
     int registerParity=0;
 
-    // (0,0,0)
-    for (int i = 0; i < outputBits; i++) {
-        for (unsigned int genPoly : genPolynomials) {
-            registerParity = 0;
-            for (int j = 31; j >=0; j--) {
-                if (((genPoly >> j) & 1) == 1) {
-                    registerParity ^= shiftregister[j] -'0';
-                } 
-                else {}
-            }
-            parityBits += to_string(registerParity);
+    for (unsigned int genPoly : genPolynomials) {
+        genPoly = genPoly << 1 | 1; // just need to add another 1 at the end
+        registerParity = 0;
+        // cout << "Current genPoly: " << bitset<8>(genPoly) << endl; // Print binary of genPoly for clarity
+        // cout << "Shift Register: " << shiftregister << endl;
+        for (int j = 0; j <k; j++) {
+            if (((genPoly >> j) & 1) == 1) {
+                // cout << "  - XOR with shiftregister[" << k - 1 - j << "] (" << shiftregister[k - 1 - j] << ")" << endl;
+                registerParity ^= shiftregister[k - 1 - j] -'0';
+            } 
+            else {}
         }
+        // cout << "Intermediate registerParity: " << registerParity << endl;
+        parityBits += to_string(registerParity);
     }
-
+// cout << "Final Output is: " << parityBits << endl;
     return parityBits; 
+
 }
 
 string addNoise(string& code, float prob_of_error) {
