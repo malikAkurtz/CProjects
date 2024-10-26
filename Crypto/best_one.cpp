@@ -437,22 +437,41 @@ void printTrellisStates(const vector<vector<vNode>> &trellis) {
     }
 }
 
-string getOriginalCode(const vector<vector<vNode>> &trellis) {
-    string originalCode = "";
-    for (int t = timeSteps;t > 0; t--) {
-        //cout << "t is: " << t << endl;
-        vNode bestPathNode = trellis[t][0];
-        for (int i = 1; i < trellis[t].size();i++) {
-            if (trellis[t][i].cumHammingDistance < bestPathNode.cumHammingDistance) {
-                bestPathNode = trellis[t][i];
-            }
-        }
-        originalCode += to_string(bestPathNode.inputArrivalBit);
+
+string recursiveBackTrack(const vector<vector<vNode>>& trellis, int t, int state) {
+    if (t == 0) {
+        return "";
     }
 
-    reverse(originalCode.begin(), originalCode.end());
+    int bestPrevState = 0;
+    int minDistance = INT_MAX;
+    int inputArrivalBit = 0;
 
-    return originalCode;
+    for (int prevState = 0; prevState < trellis[t-1].size(); prevState++) {
+        if (trellis[t-1][prevState].cumHammingDistance < minDistance) {
+            minDistance = trellis[t-1][prevState].cumHammingDistance;
+            bestPrevState = prevState;
+            inputArrivalBit = trellis[t][state].inputArrivalBit;
+        }
+    }
+
+    return recursiveBackTrack(trellis, t-1, bestPrevState) + to_string(inputArrivalBit);
+}
+
+
+string getOriginalCode(const vector<vector<vNode>> &trellis) {
+    int finalState = 0;
+    int minDistance = INT_MAX;
+
+
+    for (int state = 0; state < trellis.back().size(); state++) {
+        if (trellis.back()[state].cumHammingDistance < minDistance) {
+            minDistance = trellis.back()[state].cumHammingDistance;
+            finalState = state;
+        }
+    }
+
+    return recursiveBackTrack(trellis, trellis.size()-1, finalState);
 }
 
 
