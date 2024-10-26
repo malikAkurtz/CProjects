@@ -167,9 +167,9 @@ int main() {
     vector<string> possibleStates;
 
     // used to get the random number between 0 and 1 when determining when to flip bits
-    unsigned int seed = 12345;  // Replace 12345 with any specific seed you want
-    srand(seed);
-    // srand( (unsigned)time( NULL ) );
+    // unsigned int seed = 12345;  // Replace 12345 with any specific seed you want
+    // srand(seed);
+    srand( (unsigned)time( NULL ) );
 
     // the code that we want to encode
     string message;
@@ -184,26 +184,26 @@ int main() {
     p = 0.1; // LOL
     p = 0.01; // Poor channel conditions, severe interference, or far-from-optimal signal quality.
     // p = 0.001; // Moderate noise, common in low-quality wireless connections or basic wired links with interference.
-    p = 0.01;
+    p = 0.05;
     int numIterations = 100;
 
 
-    if (code.length() < 50) {
-        lowerKlimit = 4;
-        upperKlimit = 5;
-    }
-    else if (code.length() < 100) {
-        lowerKlimit = 5;
-        upperKlimit = 7;
-    }
-    else {
-        lowerKlimit = 7;
-        upperKlimit = 8; // going above 8 will destroy your computer :)
-    }
+    // if (code.length() < 50) {
+    //     lowerKlimit = 4;
+    //     upperKlimit = 5;
+    // }
+    // else if (code.length() < 100) {
+    //     lowerKlimit = 5;
+    //     upperKlimit = 7;
+    // }
+    // else {
+    //     lowerKlimit = 7;
+    //     upperKlimit = 8; // going above 8 will destroy your computer :)
+    //}
 
 
-    // lowerKlimit = 4;
-    // upperKlimit = 8;
+    lowerKlimit = 4;
+    upperKlimit = 12;
     
     map<int, float> k_averages;  // Adjusted to store averages for all possible_k values
 
@@ -214,26 +214,64 @@ int main() {
             generatorPolynomials.push_back(0x5);
             generatorPolynomials.push_back(0x5);
             generatorPolynomials.push_back(0x5);
+            generatorPolynomials.push_back(0x5);
+            generatorPolynomials.push_back(0x5);
         }
         else if (possible_k == 5) {
             generatorPolynomials.push_back(0x9);
             generatorPolynomials.push_back(0x9);
             generatorPolynomials.push_back(0x9);
+            generatorPolynomials.push_back(0x9);
+            generatorPolynomials.push_back(0x9);
         }
         else if (possible_k == 6) {
-            generatorPolynomials.push_back(0x12);
-            generatorPolynomials.push_back(0x12);
+            generatorPolynomials.push_back(0x15);
+            generatorPolynomials.push_back(0x15);
+            generatorPolynomials.push_back(0x15);
+            generatorPolynomials.push_back(0x15);
             generatorPolynomials.push_back(0x15);
         }
         else if (possible_k == 7) {
-            generatorPolynomials.push_back(0x33);
-            generatorPolynomials.push_back(0x33);
+            generatorPolynomials.push_back(0x23);
+            generatorPolynomials.push_back(0x23);
+            generatorPolynomials.push_back(0x23);
+            generatorPolynomials.push_back(0x23);
             generatorPolynomials.push_back(0x23);
         }
         else if (possible_k == 8) {
-            generatorPolynomials.push_back(0x65);
-            generatorPolynomials.push_back(0x65);
-            generatorPolynomials.push_back(0x5b);
+            generatorPolynomials.push_back(0x72);
+            generatorPolynomials.push_back(0x72);
+            generatorPolynomials.push_back(0x72);
+            generatorPolynomials.push_back(0x72);
+            generatorPolynomials.push_back(0x72);
+        }
+        else if (possible_k == 9) {
+            generatorPolynomials.push_back(0x9b);
+            generatorPolynomials.push_back(0x9b);
+            generatorPolynomials.push_back(0x9b);
+            generatorPolynomials.push_back(0x9b);
+            generatorPolynomials.push_back(0x9b);
+        }
+        else if (possible_k == 10) {
+            generatorPolynomials.push_back(0x13c);
+            generatorPolynomials.push_back(0x13c);
+            generatorPolynomials.push_back(0x13c);
+            generatorPolynomials.push_back(0x13c);
+            generatorPolynomials.push_back(0x13c);
+        }
+        else if (possible_k == 11) {
+            generatorPolynomials.push_back(0x29b);
+            generatorPolynomials.push_back(0x29b);
+            generatorPolynomials.push_back(0x29b);
+            generatorPolynomials.push_back(0x29b);
+            generatorPolynomials.push_back(0x29b);
+        }
+        else if (possible_k == 12) {
+            generatorPolynomials.push_back(0x4f5);
+            generatorPolynomials.push_back(0x4f5);
+            generatorPolynomials.push_back(0x4f5);
+            generatorPolynomials.push_back(0x4f5);
+            generatorPolynomials.push_back(0x4f5);
         }
         float average_success = 0.0;
         int total_successes = 0;
@@ -341,6 +379,9 @@ string generateOutput(string& shiftregister, vector<unsigned int>& genPolynomial
         registerParity = 0;
         // cout << "Current genPoly: " << bitset<8>(genPoly) << endl; // Print binary of genPoly for clarity
         // cout << "Shift Register: " << shiftregister << endl;
+        // gen poly = 1011
+        // k = 4
+        //j = 0
         for (int j = 0; j <k; j++) {
             if (((genPoly >> j) & 1) == 1) {
                 // cout << "  - XOR with shiftregister[" << k - 1 - j << "] (" << shiftregister[k - 1 - j] << ")" << endl;
