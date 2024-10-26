@@ -62,15 +62,6 @@ string encode(string code, int k, vector<unsigned int> genPolynomials) { // k is
 }
 
 
-/*
-index 0 will represent state (0,0)
-index 1 will represent state (0,1)
-index 2 will represent state (1,0)
-index 3 will represent state (1,1)
-*/
-
-
-// // IN PROGRESS
 string viterbiDecode(string noisy_encoded_code, int k, vector<string> states, vector<unsigned int> genPolynomials) {
 
     string originalCode = "";
