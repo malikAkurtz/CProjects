@@ -12,6 +12,22 @@
 
 using namespace std;
 
+map<int, vector<unsigned int>> generatorPolynomialsMap = {
+    {4, {0x5, 0x5, 0x5, 0x5, 0x5}},
+    {5, {0x9, 0x9, 0x9, 0x9, 0x9}},
+    {6, {0x15, 0x15, 0x15, 0x15, 0x15}},
+    {7, {0x23, 0x23, 0x23, 0x23, 0x23}},
+    {8, {0x72, 0x72, 0x72, 0x72, 0x72}},
+    {9, {0x9b, 0x9b, 0x9b, 0x9b, 0x9b}},
+    {10, {0x13c, 0x13c, 0x13c, 0x13c, 0x13c}},
+    {11, {0x29b, 0x29b, 0x29b, 0x29b, 0x29b}},
+    {12, {0x4f5, 0x4f5, 0x4f5, 0x4f5, 0x4f5}},
+    {13, {0xa4f, 0xa4f, 0xa4f, 0xa4f, 0xa4f}},
+    {14, {0x10b7, 0x10b7, 0x10b7, 0x10b7, 0x10b7}},
+    {15, {0x2371, 0x2371, 0x2371, 0x2371, 0x2371}},
+    {16, {0x5a47, 0x5a47, 0x5a47, 0x5a47, 0x5a47}}
+};
+
 struct vNode {
     long long cumHammingDistance;
     int inputArrivalBit;
@@ -32,7 +48,7 @@ vector<string> generateStates(int k);
 string calculatePotentialInput(string& curState, int zero_or_one);
 string stringToBinary(string& message);
 string binaryToString(string& binary);
-void exportData(map<int, float>& k_data_points, string& filename);
+void exportData(map<int, vector<float>>& k_data_points, string& filename);
 
 
 int timeSteps = 0;
@@ -152,15 +168,14 @@ int main() {
     int lowerKlimit;
     int upperKlimit;
     string exportFile = "results.csv";
-    vector<unsigned int> generatorPolynomials;
 
     // degree of any gen polynomial should always be less than or equal to k-1
     vector<string> possibleStates;
 
     // used to get the random number between 0 and 1 when determining when to flip bits
-    // unsigned int seed = 12345;  // Replace 12345 with any specific seed you want
-    // srand(seed);
-    srand( (unsigned)time( NULL ) );
+    unsigned int seed = 12345;  // Replace 12345 with any specific seed you want
+    srand(seed);
+    // srand( (unsigned)time( NULL ) );
 
     // the code that we want to encode
     string message;
@@ -176,7 +191,7 @@ int main() {
     p = 0.01; // Poor channel conditions, severe interference, or far-from-optimal signal quality.
     // p = 0.001; // Moderate noise, common in low-quality wireless connections or basic wired links with interference.
     p = 0.05;
-    int numIterations = 100;
+    int numIterations = 5;
 
 
     // if (code.length() < 50) {
@@ -194,78 +209,17 @@ int main() {
 
 
     lowerKlimit = 4;
-    upperKlimit = 12;
+    upperKlimit = 16;
     
-    map<int, float> k_averages;  // Adjusted to store averages for all possible_k values
+    map<int, vector<float>> k_averages;  // Adjusted to store averages for all possible_k values
 
     // Loop over possible values of k
     for (int possible_k = lowerKlimit; possible_k <= upperKlimit; possible_k++) {
-        generatorPolynomials.clear();
-        if (possible_k == 4) {
-            generatorPolynomials.push_back(0x5);
-            generatorPolynomials.push_back(0x5);
-            generatorPolynomials.push_back(0x5);
-            generatorPolynomials.push_back(0x5);
-            generatorPolynomials.push_back(0x5);
-        }
-        else if (possible_k == 5) {
-            generatorPolynomials.push_back(0x9);
-            generatorPolynomials.push_back(0x9);
-            generatorPolynomials.push_back(0x9);
-            generatorPolynomials.push_back(0x9);
-            generatorPolynomials.push_back(0x9);
-        }
-        else if (possible_k == 6) {
-            generatorPolynomials.push_back(0x15);
-            generatorPolynomials.push_back(0x15);
-            generatorPolynomials.push_back(0x15);
-            generatorPolynomials.push_back(0x15);
-            generatorPolynomials.push_back(0x15);
-        }
-        else if (possible_k == 7) {
-            generatorPolynomials.push_back(0x23);
-            generatorPolynomials.push_back(0x23);
-            generatorPolynomials.push_back(0x23);
-            generatorPolynomials.push_back(0x23);
-            generatorPolynomials.push_back(0x23);
-        }
-        else if (possible_k == 8) {
-            generatorPolynomials.push_back(0x72);
-            generatorPolynomials.push_back(0x72);
-            generatorPolynomials.push_back(0x72);
-            generatorPolynomials.push_back(0x72);
-            generatorPolynomials.push_back(0x72);
-        }
-        else if (possible_k == 9) {
-            generatorPolynomials.push_back(0x9b);
-            generatorPolynomials.push_back(0x9b);
-            generatorPolynomials.push_back(0x9b);
-            generatorPolynomials.push_back(0x9b);
-            generatorPolynomials.push_back(0x9b);
-        }
-        else if (possible_k == 10) {
-            generatorPolynomials.push_back(0x13c);
-            generatorPolynomials.push_back(0x13c);
-            generatorPolynomials.push_back(0x13c);
-            generatorPolynomials.push_back(0x13c);
-            generatorPolynomials.push_back(0x13c);
-        }
-        else if (possible_k == 11) {
-            generatorPolynomials.push_back(0x29b);
-            generatorPolynomials.push_back(0x29b);
-            generatorPolynomials.push_back(0x29b);
-            generatorPolynomials.push_back(0x29b);
-            generatorPolynomials.push_back(0x29b);
-        }
-        else if (possible_k == 12) {
-            generatorPolynomials.push_back(0x4f5);
-            generatorPolynomials.push_back(0x4f5);
-            generatorPolynomials.push_back(0x4f5);
-            generatorPolynomials.push_back(0x4f5);
-            generatorPolynomials.push_back(0x4f5);
-        }
-        float average_success = 0.0;
-        int total_successes = 0;
+
+        float average_ber = 0.0;
+        float average_success_rate = 0.0;
+
+        float ber;
 
         possibleStates = generateStates(possible_k);
 
@@ -280,9 +234,9 @@ int main() {
             trellis.clear();
  
             // Encoding, adding noise, and decoding
-            string encoded = encode(code, possible_k, generatorPolynomials);
+            string encoded = encode(code, possible_k, generatorPolynomialsMap[possible_k]);
             string noisy_encoded = addNoise(encoded, p);
-            string originalCode = viterbiDecode(noisy_encoded, possible_k, possibleStates, generatorPolynomials);
+            string originalCode = viterbiDecode(noisy_encoded, possible_k, possibleStates, generatorPolynomialsMap[possible_k]);
             string originalMessage = binaryToString(originalCode);
             // string originalMessage = originalCode;
 
@@ -299,29 +253,32 @@ int main() {
             cout << "Noisy Code     : " << noisy_encoded << endl;
             cout << "Noise Added?   : " << (noisy_encoded == encoded ? "No" : "Yes") << endl;
             cout << "# bits flipped: " << calculateHammingDistance(encoded,noisy_encoded) << endl;
+            ber = ((float) calculateHammingDistance(code, originalCode) / (float) code.length());
+            cout << "Bit Error Rate : " << ber * 100 << "%" << endl;
+            average_ber += ber;
             cout << "Decoded Code   : " << originalCode << endl;
             cout << "Decoded Message: " << originalMessage << endl;
 
             bool success = (code == originalCode);
             if (success) {
                 cout << "Result         : SUCCESS" << endl;
-                total_successes += 1;
+                average_success_rate += 1;
             } else {
                 cout << "Result         : FAIL" << endl;
             }
             cout << "---------------------------------------------------------------" << endl;
-
-            average_success += success;
         }
 
         // Calculate and display the success rate for this k value
-        float success_rate = (average_success / numIterations);
-        k_averages[possible_k] = success_rate;
+        average_ber /= numIterations;
+        average_success_rate /= numIterations;
+        k_averages[possible_k].push_back(average_ber);
+        k_averages[possible_k].push_back(average_success_rate);
 
         cout << "===============================================================" << endl;
         cout << "Summary for k = " << possible_k << ":" << endl;
-        cout << "Total Successes: " << total_successes << " / " << numIterations << endl;
-        cout << "Average Success: " << success_rate * 100 << "% success rate" << endl;
+        cout << "Average Success Rate: " << average_success_rate * 100 << "% Success Rate" << endl;
+        cout << "Average BER: " << average_ber * 100 << "% Bit Error Rate" << endl;
         cout << "===============================================================" << endl << endl;
     }
 
@@ -332,7 +289,9 @@ int main() {
     cout << "Message length was: " << code.length() << endl;
     // cout << "Output Bits per input: " << outputBits << endl;
     for (int i = lowerKlimit; i <= upperKlimit; i++) {
-        cout << "For k = " << i << " -> Average Success = " << k_averages[i] * 100 << "%" << endl;
+        cout << "For k = " << i << 
+        " -> Average BER = " << std::fixed << std::setprecision(2) << k_averages[i][0] * 100 << "%" << 
+        " -> Average Success Rate = " << k_averages[i][1] * 100 << "%" << endl;
     }
     cout << "===========================================================" << endl;
 
@@ -520,12 +479,12 @@ string binaryToString(string& binary) {
     return stringBinary;
 }
 
-void exportData(map<int, float>& k_data_points, string& filename) {
+void exportData(map<int, vector<float>>& k_data_points, string& filename) {
     ofstream file(filename);
     if (file.is_open()) {
-        file << "K, Success Rate\n";
+        file << "K, Success Rate, BER\n";
         for (auto& entry : k_data_points) {
-            file << entry.first << "," << entry.second * 100 << "\n";
+            file << entry.first << "," << entry.second[1] * 100 << "," << entry.second[0] * 100 << "\n";
         }
         file.close();
     }
