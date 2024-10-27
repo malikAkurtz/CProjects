@@ -48,6 +48,7 @@ vector<bool> stringToVecBool(string& message);                                  
 string vecBoolToString(vector<bool>& binary);                                                   // DONE
 void exportData(map<int, vector<float>>& k_data_points, string& filename);                      // DONE
 void printTrellisStates(const vector<vector<vNode>> &trellis);                                  // DONE
+string vecBoolToStringBinary(vector<bool>& binary);
 int vecBoolToInt(vector<bool>& bits);                                               
 
 
@@ -208,7 +209,7 @@ int main() {
 
 
     lowerKlimit = 4;
-    upperKlimit = 16;
+    upperKlimit = 10;
     
     map<int, vector<float>> k_averages;  // Adjusted to store averages for all possible_k values
 
@@ -247,15 +248,15 @@ int main() {
             // print a newline after all polynomials have been printed
             cout << endl;
             cout << "Original Message : " << message << endl;
-            cout << "Original Code  : " << vecBoolToString(code) << endl;
-            cout << "Encoded Code   : " << vecBoolToString(encoded) << endl;
-            cout << "Noisy Code     : " << vecBoolToString(noisy_encoded) << endl;
+            cout << "Original Code  : " << vecBoolToStringBinary(code) << endl;
+            cout << "Encoded Code   : " << vecBoolToStringBinary(encoded) << endl;
+            cout << "Noisy Code     : " << vecBoolToStringBinary(noisy_encoded) << endl;
             cout << "Noise Added?   : " << (noisy_encoded == encoded ? "No" : "Yes") << endl;
             cout << "# bits flipped: " << calculateHammingDistance(encoded,noisy_encoded) << endl;
             ber = ((float) calculateHammingDistance(code, originalCode) / (float) code.size());
             cout << "Bit Error Rate : " << ber * 100 << "%" << endl;
             average_ber += ber;
-            cout << "Decoded Code   : " << vecBoolToString(originalCode) << endl;
+            cout << "Decoded Code   : " << vecBoolToStringBinary(originalCode) << endl;
             cout << "Decoded Message: " << originalMessage << endl;
 
             bool success = (code == originalCode);
@@ -485,6 +486,16 @@ string vecBoolToString(vector<bool>& binary) {
 
         // Convert the bitset to a character and add it to the output string
         stringBinary += static_cast<char>(charBits.to_ulong());
+    }
+
+    return stringBinary;
+}
+
+string vecBoolToStringBinary(vector<bool>& binary) {
+    string stringBinary = "";
+
+    for (int i = 0; i < binary.size(); i++) {
+        stringBinary += to_string(binary[i]);
     }
 
     return stringBinary;
