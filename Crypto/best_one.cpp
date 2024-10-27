@@ -30,7 +30,7 @@ map<int, vector<unsigned int>> generatorPolynomialsMap = {
 
 struct vNode {
     long long cumHammingDistance;
-    int inputArrivalBit;
+    bool inputArrivalBit;
     int state;
 
     bool operator<(const vNode& other) const {
@@ -42,10 +42,10 @@ int calculateHammingDistance(string& code1, string& code2);
 string generateOutput(string& shiftregister, vector<unsigned int>& genPolynomials);
 string addNoise(string& code, float prob_of_error);
 void printTrellisStates(const vector<vector<vNode>> &trellis);
-string getOriginalCode(const vector<vector<vNode>> &trellis);
+vector<bool> getOriginalCode(const vector<vector<vNode>> &trellis);
 void removeDuplicatePaths(vector<vector<vNode>> &trellis, int t);
 vector<string> generateStates(int k);
-string calculatePotentialInput(string& curState, int zero_or_one);
+vector<bool> calculatePotentialInput(string& curState, int zero_or_one);
 string stringToBinary(string& message);
 string binaryToString(string& binary);
 void exportData(map<int, vector<float>>& k_data_points, string& filename);
@@ -55,32 +55,37 @@ int timeSteps = 0;
 vector<vector<vNode>> trellis;
 
 // // Encode Method
-string encode(string code, int k, vector<unsigned int> genPolynomials) { // k is the constraint length i.e length of the shift register we want to use
-    string encodedVector = "";
-    string sliding_window = "";
+vector<bool> encode(vector<bool> code, int k, vector<unsigned int> genPolynomials) { // k is the constraint length i.e length of the shift register we want to use
+    vector<bool> encodedVector = {};
+    vector<bool> sliding_window = {};
+    vector<bool> outputVector = {};
     // Follow this same procedure till every bit is processed
     for (int i = 0; i < code.size(); i++) {
-        sliding_window = "";
-        sliding_window += string(max((k-i-1), 0), '0'); // the registers that are still empty
+        sliding_window.clear();
+        for (int m = 0; m < k-i-1; m++) {
+            sliding_window.push_back(0);
+        }
         for (int j = 0; j < k - (max((k-i-1), 0));j++) {
             if (i >= k) {
-                sliding_window += code[j-(k-i-1)];
+                sliding_window.push_back(code[j-(k-i-1)]);
             }
             else {
-                sliding_window += code[j];
+                sliding_window.push_back(code[j]);
             }
             
         }
-        encodedVector += generateOutput(sliding_window, genPolynomials);
+        vector<bool> outputVector = generateOutput(sliding_window, genPolynomials);
+        encodedVector.insert(encodedVector.end(), outputVector.begin(), outputVector.end());
+
         timeSteps += 1;
     }
     return encodedVector;
 }
 
 
-string viterbiDecode(string noisy_encoded_code, int k, vector<string> states, vector<unsigned int> genPolynomials) {
+vector<bool> viterbiDecode(vector<bool> noisy_encoded_code, int k, vector<string> states, vector<unsigned int> genPolynomials) {
 
-    string originalCode = "";
+    vector<bool> decoded = {};
     
     int outputBits = genPolynomials.size();
     trellis.resize(timeSteps + 1);
@@ -92,7 +97,7 @@ string viterbiDecode(string noisy_encoded_code, int k, vector<string> states, ve
             vNode defaultNode;
 
             defaultNode.state = s;
-            defaultNode.inputArrivalBit = -1;
+            defaultNode.inputArrivalBit = 0;
             defaultNode.cumHammingDistance = INT_MAX;
             trellis[t].push_back(defaultNode);          
             
@@ -106,11 +111,11 @@ string viterbiDecode(string noisy_encoded_code, int k, vector<string> states, ve
 
 
     for (int t = 1; t <= timeSteps; t++) {
-        string observedInput = noisy_encoded_code.substr(outputBits*(t-1), outputBits);
+        vector<bool> observedInput = vector<bool>(noisy_encoded_code.begin() + (outputBits*(t-1)), noisy_encoded_code.begin() + (outputBits*(t-1) + outputBits));
         for (int s = 0; s < states.size(); s++) {
             // cout << "------------------------------------------------------------------------" << endl;
             // cout << "State is: " << s << endl;
-            int transitionBit;
+            bool transitionBit;
             if (s % 2 == 0) {
                 // could only have gotten to this state s with a transition bit of 0
                 transitionBit = 0;
@@ -125,8 +130,8 @@ string viterbiDecode(string noisy_encoded_code, int k, vector<string> states, ve
             int firstPrevState = (std::stoi(states[s], nullptr, 2) >> 1);
             if (trellis[t-1][firstPrevState].cumHammingDistance != INT_MAX) {
                 // cout << "Previous state for first input is: " << to_string(firstPrevState) << endl;
-                string firstPotentialInput = calculatePotentialInput(states[firstPrevState], transitionBit);
-                string firstExpected = generateOutput(firstPotentialInput, genPolynomials);
+                vector<bool> firstPotentialInput = calculatePotentialInput(states[firstPrevState], transitionBit);
+                vector<bool> firstExpected = generateOutput(firstPotentialInput, genPolynomials);
                 // cout << "Our expected is:    " << firstExpected << endl;
                 // cout << "Our observation is: " << observedInput << endl;
                 int firstHammingDistance = trellis[t-1][firstPrevState].cumHammingDistance + calculateHammingDistance(observedInput, firstExpected);
@@ -141,8 +146,8 @@ string viterbiDecode(string noisy_encoded_code, int k, vector<string> states, ve
             int secondPrevState = ((std::stoi(states[s], nullptr, 2) >> 1) | (1 << (k-2)));
             if (trellis[t-1][secondPrevState].cumHammingDistance != INT_MAX) {
                 // cout << "Previous state for second input is: " << to_string(secondPrevState) << endl;
-                string secondPotentialInput = calculatePotentialInput(states[secondPrevState], transitionBit);
-                string secondExpected = generateOutput(secondPotentialInput, genPolynomials);
+                vector<bool> secondPotentialInput = calculatePotentialInput(states[secondPrevState], transitionBit);
+                vector<bool> secondExpected = generateOutput(secondPotentialInput, genPolynomials);
                 // cout << "Our expected is:    " << secondExpected << endl;
                 // cout << "Our observation is: " << observedInput << endl;
                 int secondHammingDistance = trellis[t-1][secondPrevState].cumHammingDistance + calculateHammingDistance(observedInput, secondExpected);
@@ -234,7 +239,7 @@ int main() {
             trellis.clear();
  
             // Encoding, adding noise, and decoding
-            string encoded = encode(code, possible_k, generatorPolynomialsMap[possible_k]);
+            vector<bool> encoded = encode(code, possible_k, generatorPolynomialsMap[possible_k]);
             string noisy_encoded = addNoise(encoded, p);
             string originalCode = viterbiDecode(noisy_encoded, possible_k, possibleStates, generatorPolynomialsMap[possible_k]);
             string originalMessage = binaryToString(originalCode);
@@ -301,13 +306,13 @@ int main() {
 
 
 
-int calculateHammingDistance(string& code1, string& code2) {
-    if (code1.length() != code2.length()) {
+int calculateHammingDistance(vector<bool>& code1, vector<bool>& code2) {
+    if (code1.size() != code2.size()) {
         return -1;
     }
 
     int hammingDistance = 0;
-    for (int i = 0; i < code1.length(); i++) {
+    for (int i = 0; i < code1.size(); i++) {
         if (code1[i] != code2[i]) {
             hammingDistance++;
         }
@@ -316,16 +321,14 @@ int calculateHammingDistance(string& code1, string& code2) {
     return hammingDistance;
 }
 
-string generateOutput(string& shiftregister, vector<unsigned int>& genPolynomials) {
-    int k = shiftregister.length();
+vector<bool> generateOutput(vector<bool> shiftregister, vector<unsigned int>& genPolynomials) {
+    vector<bool> toReturn = {};
+    int k = shiftregister.size();
 
-    string parityBits = "";
-
-
-    int registerParity=0;
+    bool registerParity=0;
 
     for (unsigned int genPoly : genPolynomials) {
-        genPoly = genPoly << 1 | 1; // just need to add another 1 at the end
+        genPoly = genPoly << 1 | 1; // just need to add another 1 at the end due to implicit +1 notation
         registerParity = 0;
         // cout << "Current genPoly: " << bitset<8>(genPoly) << endl; // Print binary of genPoly for clarity
         // cout << "Shift Register: " << shiftregister << endl;
@@ -335,16 +338,15 @@ string generateOutput(string& shiftregister, vector<unsigned int>& genPolynomial
         for (int j = 0; j <k; j++) {
             if (((genPoly >> j) & 1) == 1) {
                 // cout << "  - XOR with shiftregister[" << k - 1 - j << "] (" << shiftregister[k - 1 - j] << ")" << endl;
-                registerParity ^= shiftregister[k - 1 - j] -'0';
+                registerParity ^= shiftregister[k - 1 - j];
             } 
             else {}
         }
         // cout << "Intermediate registerParity: " << registerParity << endl;
-        parityBits += to_string(registerParity);
+        toReturn.push_back(registerParity);
     }
 // cout << "Final Output is: " << parityBits << endl;
-    return parityBits; 
-
+    return toReturn; 
 }
 
 string addNoise(string& code, float prob_of_error) {
@@ -388,14 +390,14 @@ void printTrellisStates(const vector<vector<vNode>> &trellis) {
 }
 
 
-string recursiveBackTrack(const vector<vector<vNode>>& trellis, int t, int state) {
+vector<bool> recursiveBackTrack(const vector<vector<vNode>>& trellis, int t, int state) {
     if (t == 0) {
-        return "";
+        return {};
     }
 
     int bestPrevState = 0;
     int minDistance = INT_MAX;
-    int inputArrivalBit = 0;
+    bool inputArrivalBit = 0;
 
     for (int prevState = 0; prevState < trellis[t-1].size(); prevState++) {
         if (trellis[t-1][prevState].cumHammingDistance < minDistance) {
@@ -405,11 +407,15 @@ string recursiveBackTrack(const vector<vector<vNode>>& trellis, int t, int state
         }
     }
 
-    return recursiveBackTrack(trellis, t-1, bestPrevState) + to_string(inputArrivalBit);
+    vector<bool> result = recursiveBackTrack(trellis, t - 1, bestPrevState);
+
+    result.push_back(inputArrivalBit);
+
+    return result;
 }
 
 
-string getOriginalCode(const vector<vector<vNode>> &trellis) {
+vector<bool> getOriginalCode(const vector<vector<vNode>> &trellis) {
     int finalState = 0;
     int minDistance = INT_MAX;
 
@@ -454,9 +460,9 @@ vector<string> generateStates(int k) {
     return statesVector;
 }
 
-string calculatePotentialInput(string& curState, int next_input) {
-    string input = curState;
-    input += to_string(next_input);
+vector<bool> calculatePotentialInput(vector<bool>& curState, bool next_input) {
+    vector<bool> input = curState;
+    input.push_back(next_input);
     return input;
 }
 
@@ -468,10 +474,10 @@ string stringToBinary(string& message) {
     return binaryString;
 }
 
-string binaryToString(string& binary) {
+string binaryToString(vector<booL>& binary) {
     string stringBinary = "";
 
-    for (int i = 0; i < binary.length(); i+=8) {
+    for (int i = 0; i < binary.size(); i+=8) {
         bitset<8> charBits(binary.substr(i,8));
         stringBinary += char(charBits.to_ulong());
     }
