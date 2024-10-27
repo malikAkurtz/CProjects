@@ -38,17 +38,17 @@ struct vNode {
     }
 };
 
-int calculateHammingDistance(string& code1, string& code2);
-string generateOutput(string& shiftregister, vector<unsigned int>& genPolynomials);
-string addNoise(string& code, float prob_of_error);
-void printTrellisStates(const vector<vector<vNode>> &trellis);
-vector<bool> getOriginalCode(const vector<vector<vNode>> &trellis);
-void removeDuplicatePaths(vector<vector<vNode>> &trellis, int t);
-vector<string> generateStates(int k);
-vector<bool> calculatePotentialInput(string& curState, int zero_or_one);
-string stringToBinary(string& message);
-string binaryToString(string& binary);
-void exportData(map<int, vector<float>>& k_data_points, string& filename);
+int calculateHammingDistance(vector<bool>& code1, vector<bool>& code2);                         // DONE
+vector<bool> generateOutput(vector<bool>& shiftregister, vector<unsigned int>& genPolynomials); // DONE
+vector<bool> addNoise(vector<bool>& code, float prob_of_error);                                 // DONE
+vector<bool> getOriginalCode(const vector<vector<vNode>> &trellis);                             // DONE
+vector<vector<bool>> generateStates(int k);                                                     // DONE
+vector<bool> calculatePotentialInput(vector<bool>& curState, bool next_input);                  // DONE
+vector<bool> stringToVecBool(string& message);                                                  // DONE
+string vecBoolToString(vector<bool>& binary);                                                   // DONE
+void exportData(map<int, vector<float>>& k_data_points, string& filename);                      // DONE
+void printTrellisStates(const vector<vector<vNode>> &trellis);                                  // DONE
+int vecBoolToInt(vector<bool>& bits);                                               
 
 
 int timeSteps = 0;
@@ -83,7 +83,7 @@ vector<bool> encode(vector<bool> code, int k, vector<unsigned int> genPolynomial
 }
 
 
-vector<bool> viterbiDecode(vector<bool> noisy_encoded_code, int k, vector<string> states, vector<unsigned int> genPolynomials) {
+vector<bool> viterbiDecode(vector<bool> noisy_encoded_code, int k, vector<vector<bool>> states, vector<unsigned int> genPolynomials) {
 
     vector<bool> decoded = {};
     
@@ -115,19 +115,13 @@ vector<bool> viterbiDecode(vector<bool> noisy_encoded_code, int k, vector<string
         for (int s = 0; s < states.size(); s++) {
             // cout << "------------------------------------------------------------------------" << endl;
             // cout << "State is: " << s << endl;
-            bool transitionBit;
-            if (s % 2 == 0) {
-                // could only have gotten to this state s with a transition bit of 0
-                transitionBit = 0;
-                trellis[t][s].inputArrivalBit = transitionBit;
-            }
-            else {
-                transitionBit = 1;
-                trellis[t][s].inputArrivalBit = transitionBit;
-            }
+            bool transitionBit = s % 2;
+            trellis[t][s].inputArrivalBit = transitionBit;
+            
+            int currentState = vecBoolToInt(states[s]);
 
-            // for each state we need to see what happens if the input is a 0 or a 1
-            int firstPrevState = (std::stoi(states[s], nullptr, 2) >> 1);
+    
+            int firstPrevState = (currentState >> 1);
             if (trellis[t-1][firstPrevState].cumHammingDistance != INT_MAX) {
                 // cout << "Previous state for first input is: " << to_string(firstPrevState) << endl;
                 vector<bool> firstPotentialInput = calculatePotentialInput(states[firstPrevState], transitionBit);
@@ -143,7 +137,7 @@ vector<bool> viterbiDecode(vector<bool> noisy_encoded_code, int k, vector<string
             }
             
 
-            int secondPrevState = ((std::stoi(states[s], nullptr, 2) >> 1) | (1 << (k-2)));
+            int secondPrevState = ((currentState) >> 1) | (1 << (k-2));
             if (trellis[t-1][secondPrevState].cumHammingDistance != INT_MAX) {
                 // cout << "Previous state for second input is: " << to_string(secondPrevState) << endl;
                 vector<bool> secondPotentialInput = calculatePotentialInput(states[secondPrevState], transitionBit);
@@ -175,7 +169,7 @@ int main() {
     string exportFile = "results.csv";
 
     // degree of any gen polynomial should always be less than or equal to k-1
-    vector<string> possibleStates;
+    vector<vector<bool>> possibleStates;
 
     // used to get the random number between 0 and 1 when determining when to flip bits
     unsigned int seed = 12345;  // Replace 12345 with any specific seed you want
@@ -185,7 +179,7 @@ int main() {
     // the code that we want to encode
     string message;
     getline(cin, message);
-    string code = stringToBinary(message);
+    vector<bool> code = stringToVecBool(message);
 
     // string code = "1010";
 
@@ -240,9 +234,9 @@ int main() {
  
             // Encoding, adding noise, and decoding
             vector<bool> encoded = encode(code, possible_k, generatorPolynomialsMap[possible_k]);
-            string noisy_encoded = addNoise(encoded, p);
-            string originalCode = viterbiDecode(noisy_encoded, possible_k, possibleStates, generatorPolynomialsMap[possible_k]);
-            string originalMessage = binaryToString(originalCode);
+            vector<bool> noisy_encoded = addNoise(encoded, p);
+            vector<bool> originalCode = viterbiDecode(noisy_encoded, possible_k, possibleStates, generatorPolynomialsMap[possible_k]);
+            string originalMessage = vecBoolToString(originalCode);
             // string originalMessage = originalCode;
 
             // Displaying results for each iteration
@@ -253,15 +247,15 @@ int main() {
             // print a newline after all polynomials have been printed
             cout << endl;
             cout << "Original Message : " << message << endl;
-            cout << "Original Code  : " << code << endl;
-            cout << "Encoded Code   : " << encoded << endl;
-            cout << "Noisy Code     : " << noisy_encoded << endl;
+            cout << "Original Code  : " << vecBoolToString(code) << endl;
+            cout << "Encoded Code   : " << vecBoolToString(encoded) << endl;
+            cout << "Noisy Code     : " << vecBoolToString(noisy_encoded) << endl;
             cout << "Noise Added?   : " << (noisy_encoded == encoded ? "No" : "Yes") << endl;
             cout << "# bits flipped: " << calculateHammingDistance(encoded,noisy_encoded) << endl;
-            ber = ((float) calculateHammingDistance(code, originalCode) / (float) code.length());
+            ber = ((float) calculateHammingDistance(code, originalCode) / (float) code.size());
             cout << "Bit Error Rate : " << ber * 100 << "%" << endl;
             average_ber += ber;
-            cout << "Decoded Code   : " << originalCode << endl;
+            cout << "Decoded Code   : " << vecBoolToString(originalCode) << endl;
             cout << "Decoded Message: " << originalMessage << endl;
 
             bool success = (code == originalCode);
@@ -291,7 +285,7 @@ int main() {
     cout << "===================== Overall Results =====================" << endl;
     cout << "Noise was: " << p << endl;
     cout << "Original message was: " << message << endl;
-    cout << "Message length was: " << code.length() << endl;
+    cout << "Message length was: " << code.size() << endl;
     // cout << "Output Bits per input: " << outputBits << endl;
     for (int i = lowerKlimit; i <= upperKlimit; i++) {
         cout << "For k = " << i << 
@@ -321,7 +315,7 @@ int calculateHammingDistance(vector<bool>& code1, vector<bool>& code2) {
     return hammingDistance;
 }
 
-vector<bool> generateOutput(vector<bool> shiftregister, vector<unsigned int>& genPolynomials) {
+vector<bool> generateOutput(vector<bool>& shiftregister, vector<unsigned int>& genPolynomials) {
     vector<bool> toReturn = {};
     int k = shiftregister.size();
 
@@ -335,7 +329,7 @@ vector<bool> generateOutput(vector<bool> shiftregister, vector<unsigned int>& ge
         // gen poly = 1011
         // k = 4
         //j = 0
-        for (int j = 0; j <k; j++) {
+        for (int j = 0; j < k; j++) {
             if (((genPoly >> j) & 1) == 1) {
                 // cout << "  - XOR with shiftregister[" << k - 1 - j << "] (" << shiftregister[k - 1 - j] << ")" << endl;
                 registerParity ^= shiftregister[k - 1 - j];
@@ -349,30 +343,29 @@ vector<bool> generateOutput(vector<bool> shiftregister, vector<unsigned int>& ge
     return toReturn; 
 }
 
-string addNoise(string& code, float prob_of_error) {
+vector<bool> addNoise(vector<bool>& code, float prob_of_error) {
 
-    string noisyEncoded = "";
+    vector<bool> noisyEncoded = {};
     
-    // For every char bit in the string code
-    for (int i = 0; i < code.length(); i++) {
+    // For every  bit in the  code
+    for (int i = 0; i < code.size(); i++) {
         // turn the char back to an int
-        int bit = code[i] - '0';
         // calculate a random number between 0 and 1 and if its less than the p value passed in, flip the bit
         if ((float) rand()/RAND_MAX < prob_of_error) {
-            switch (bit) {
+            switch (code[i]) {
                 case 0:
-                    noisyEncoded += to_string(1);
+                    noisyEncoded.push_back(1);
                     break;
                 case 1:
                     //cout << "Flipping 1 to 0" << endl;
-                    noisyEncoded += to_string(0);
+                    noisyEncoded.push_back(1);
                     //cout << std::bitset<64>(raw_code_as_vector[i]).to_string() << endl;
                     break;
             }
         }
         // if the random number generated isn't less than p, dont flip the bit
         else {
-            noisyEncoded += code[i];
+            noisyEncoded.push_back(code[i]);
         }
         
     }
@@ -432,16 +425,16 @@ vector<bool> getOriginalCode(const vector<vector<vNode>> &trellis) {
 
 
 
-vector<string> generateStates(int k) {
-    vector<string> statesVector = {};
+vector<vector<bool>> generateStates(int k) {
+    vector<vector<bool>> statesVector = {};
 
-    string curState;
+    vector<bool> curState;
     //Ex. k = 4
     // this loop will run 8 times to generate all 8 possible states
     // i goes from 0-7
     // for i = 0
     for (int i = 0; i < pow(2, k-1); i++) {
-        curState = "";
+        curState = {};
         // bit = 4 - 2 = 2
         // so bit goes from 2-0
         for (int bit = k - 2; bit >= 0; bit--) {
@@ -452,7 +445,7 @@ vector<string> generateStates(int k) {
             // 0 >> 1 = 0, & 1 = 0, 0 gets appended
             // bit = 0
             // 0 >> 0 = 0, & 1 = 0, 0 gets appended
-             curState += to_string(((i >> bit) & 1));
+            curState.push_back(((i >> bit) & 1));
         }
         statesVector.push_back(curState);
     }
@@ -466,20 +459,32 @@ vector<bool> calculatePotentialInput(vector<bool>& curState, bool next_input) {
     return input;
 }
 
-string stringToBinary(string& message) {
-    string binaryString = "";
+vector<bool> stringToVecBool(string& message) {
+    vector<bool> vecBool = {};
+
+    // for every char in the message
     for (char c : message) {
-        binaryString += std::bitset<8>(c).to_string();
+        bitset<8> bits(c);
+        for (int i = 7; i >= 0; i--) {
+            vecBool.push_back(bits[i]);
+        }
     }
-    return binaryString;
+    return vecBool;
 }
 
-string binaryToString(vector<booL>& binary) {
+string vecBoolToString(vector<bool>& binary) {
     string stringBinary = "";
 
-    for (int i = 0; i < binary.size(); i+=8) {
-        bitset<8> charBits(binary.substr(i,8));
-        stringBinary += char(charBits.to_ulong());
+    for (size_t i = 0; i < binary.size(); i += 8) {
+        bitset<8> charBits;
+        
+        // Collect 8 bits from the vector<bool> and set them in the bitset
+        for (size_t j = 0; j < 8 && i + j < binary.size(); ++j) {
+            charBits[7 - j] = binary[i + j];  // Fill from most significant to least significant bit
+        }
+
+        // Convert the bitset to a character and add it to the output string
+        stringBinary += static_cast<char>(charBits.to_ulong());
     }
 
     return stringBinary;
@@ -495,4 +500,12 @@ void exportData(map<int, vector<float>>& k_data_points, string& filename) {
         file.close();
     }
 
+}
+
+int vecBoolToInt(vector<bool>& bits) {
+    int value = 0;
+    for (bool bit : bits) {
+        value = (value << 1) | bit;
+    }
+    return value;
 }
