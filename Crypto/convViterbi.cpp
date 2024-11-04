@@ -472,35 +472,39 @@ vector<bool> calculatePotentialInput(vector<bool>& curState, bool next_input) {
     return input;
 }
 
-vector<bool> stringToVecBool(string& message) {
-    vector<bool> vecBool = {};
 
-    // for every char in the message
+vector<bool> stringToVecBool(string& message) {
+
+    vector<bool> toReturn = {};
+
+    bitset<8> curCharacter;
+
+    // for every character in the string
     for (char c : message) {
-        bitset<8> bits(c);
+        curCharacter = c;
+        // for every bit in the character
         for (int i = 7; i >= 0; i--) {
-            vecBool.push_back(bits[i]);
+            toReturn.push_back(curCharacter[i]);
         }
     }
-    return vecBool;
+
+    return toReturn;
 }
 
+
 string vecBoolToString(vector<bool>& binary) {
-    string stringBinary = "";
+    string toReturn = "";
 
-    for (size_t i = 0; i < binary.size(); i += 8) {
-        bitset<8> charBits;
-        
-        // Collect 8 bits from the vector<bool> and set them in the bitset
-        for (size_t j = 0; j < 8 && i + j < binary.size(); ++j) {
-            charBits[7 - j] = binary[i + j];  // Fill from most significant to least significant bit
+    char c = 0;
+
+    for (int i = 0; i < binary.size() ; i+=8) {
+        for (int j = 0; j < 8 ; j++) {
+            c = c << 1 | binary[i+j];
         }
-
-        // Convert the bitset to a character and add it to the output string
-        stringBinary += static_cast<char>(charBits.to_ulong());
+        toReturn += c;
     }
 
-    return stringBinary;
+    return toReturn;
 }
 
 string vecBoolToStringBinary(vector<bool>& binary) {
