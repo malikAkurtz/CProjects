@@ -49,21 +49,27 @@ string vecBoolToString(vector<bool> vector_code) {
 // number of redundancy bits = log2()
 
 
-int calculateNumParityBits(size_t input) {
-    return 0;
+int calculateNumParityBits(vector<bool> input) {
+    int numParityBits = ceil(log(input.size())) + 1;
+
+    return numParityBits;
 }
 
 
 int main() {
-    string message = "this is a super duper long test message";
+    string message = "a";
     vector<bool> encoded = stringToVecBool(message);
+
+    for (bool b : encoded) {
+        cout << b;
+    } cout << endl;
+
     string decoded = vecBoolToString(encoded);
 
     cout << decoded << endl;
+    cout << calculateNumParityBits(encoded);
 
-    // for (bool b : asVecBool) {
-    //     cout << b;
-    // }
+    
 
     return 0;
 }
