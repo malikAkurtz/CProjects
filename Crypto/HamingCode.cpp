@@ -12,55 +12,16 @@
 
 using namespace std;
 
-vector<bool> stringToVecBool(string code) {
-
-    vector<bool> toReturn = {};
-
-    bitset<8> curCharacter;
-
-    // for every character in the string
-    for (char c : code) {
-        curCharacter = c;
-        // for every bit in the character
-        for (int i = 7; i >= 0; i--) {
-            toReturn.push_back(curCharacter[i]);
-        }
-    }
-
-    return toReturn;
-}
-
-string vecBoolToString(vector<bool> vector_code) {
-    string toReturn = "";
-
-    char c = 0;
-
-    for (int i = 0; i < vector_code.size() ; i+=8) {
-        for (int j = 0; j < 8 ; j++) {
-            c = c << 1 | vector_code[i+j];
-        }
-        toReturn += c;
-    }
-
-    return toReturn;
-}
+vector<bool> stringToVecBool(string code);
+string vecBoolToString(vector<bool> vector_code);
+int calculateNumberParityBits(int numDataBits);
+vector<bool> flipBit(vector<bool> encoded);
 
 
-
-vector<bool> encode(vector<bool> input) {
-
-    int r = 0;
-    int m = input.size();
-
-
-    // Calculate number of parity bits
-    // 1 << r is equal to 2^r, so while 2^r is less than m + r + 1, increment r
-    while (!((1 << r) >= (m + r + 1))) {
-        r++;
-    }
+vector<bool> encode(vector<bool> input, int totalBits) {
 
     //initialize a vector that will hold our data bits plus our redundant bits
-    vector<bool> toReturn(m + r);
+    vector<bool> toReturn(totalBits);
 
     
     int dataIndex = 0;
@@ -95,18 +56,8 @@ vector<bool> encode(vector<bool> input) {
 }
 
 
-vector<bool> flipBit(vector<bool> encoded) {
-    int min = 0;
-    int max = encoded.size() - 1;
-    int random_num = min + rand() % (max - min + 1);
 
-    encoded[random_num] = encoded[random_num] ^ 1;
-
-    return encoded;
-}
-
-
-vector<bool> decode(vector<bool> noisy_encoded) {
+int calculateErrorSyndrome(vector<bool> noisy_encoded) {
     vector<bool> correctEncoding = noisy_encoded;
 
     vector<bool> decoded = {};
@@ -127,8 +78,17 @@ vector<bool> decode(vector<bool> noisy_encoded) {
         }
     }
 
-    if (errorSyndrome != 0) {
-        correctEncoding[errorSyndrome-1] = correctEncoding[errorSyndrome-1] ^ 1;
+    return errorSyndrome;
+}
+
+vector<bool> decode(vector<bool> noisy_encoded, int error_syndrome) {
+
+    vector<bool> decoded = {};
+    vector<bool> correctEncoding = noisy_encoded;
+
+    if (error_syndrome != 0) {
+        int errorIndex = error_syndrome - 1;
+        correctEncoding[errorIndex] = correctEncoding[errorIndex] ^ 1;
     }
 
     // For every position in our output vector
@@ -149,8 +109,6 @@ vector<bool> decode(vector<bool> noisy_encoded) {
 }
 
 
-
-
 int main() {
 
     srand(time(0)); // Seed with the current time
@@ -158,18 +116,25 @@ int main() {
     string message;
     getline(cin, message);
     vector<bool> asVecBool = stringToVecBool(message);
+    //asVecBool = {1,0,1,0};
+
+    int k = asVecBool.size();               // Total # of Data Bits
+    int r = calculateNumberParityBits(k);   // Total # of Redundant Bits
+    int n = k+r;                            // Total # of Bits
+
+    double codeRate = (double) k / n;       // The ratio of Data Bits to Total Bits (Higher = Better)
+
+    printf("This is a Hamming(%d, %d) Code\n", n, k);
+    printf("The Code Rate is: %f\n", codeRate);
 
     cout << "Original Message: " << message << endl;
-
     cout << "Original Message in Binary: ";
     for (bool b : asVecBool) {
         cout << b;
     } cout << endl;
 
-    vector<bool> encoded = encode(asVecBool);
 
-
-
+    vector<bool> encoded = encode(asVecBool, n);
     cout << "Encoded Message in Binary:  ";
     for (bool b : encoded) {
         cout << b;
@@ -177,14 +142,13 @@ int main() {
     
 
     vector<bool> noisy_encoded = flipBit(encoded);
-
     cout << "Noisy Message in Binary:    ";
     for (bool b : noisy_encoded) {
         cout << b;
     } cout << endl;
 
-    vector<bool> decoded = decode(noisy_encoded);
-
+    int errorSyndrome = calculateErrorSyndrome(noisy_encoded);
+    vector<bool> decoded = decode(noisy_encoded, errorSyndrome);
     cout << "Decoded Message in Binary:  ";
     for (bool b : decoded) {
         cout << b;
@@ -194,4 +158,61 @@ int main() {
     
 
     return 0;
+}
+
+
+
+vector<bool> stringToVecBool(string code) {
+
+    vector<bool> toReturn = {};
+
+    bitset<8> curCharacter;
+
+    // for every character in the string
+    for (char c : code) {
+        curCharacter = c;
+        // for every bit in the character
+        for (int i = 7; i >= 0; i--) {
+            toReturn.push_back(curCharacter[i]);
+        }
+    }
+
+    return toReturn;
+}
+
+
+string vecBoolToString(vector<bool> vector_code) {
+    string toReturn = "";
+
+    char c = 0;
+
+    for (int i = 0; i < vector_code.size() ; i+=8) {
+        for (int j = 0; j < 8 ; j++) {
+            c = c << 1 | vector_code[i+j];
+        }
+        toReturn += c;
+    }
+
+    return toReturn;
+}
+
+
+int calculateNumberParityBits(int numDataBits) {
+    int r = 0;
+    while (!((1 << r) >= (numDataBits + r + 1))) {
+        r++;
+    }
+
+    return r;
+}
+
+
+vector<bool> flipBit(vector<bool> encoded) {
+    int min = 0;
+    int max = encoded.size() - 1;
+    int random_num = min + rand() % (max - min + 1);
+
+    encoded[random_num] = encoded[random_num] ^ 1;
+
+    return encoded;
 }
