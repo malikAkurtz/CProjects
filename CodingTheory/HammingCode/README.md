@@ -32,3 +32,17 @@ This will create an executible with the name ./hamming, which can be run with:
 ```bash
 ./hamming
 ```
+
+Example Interaction:
+
+\`\`\`plaintext 
+Enter the message to encode: Hello, World!
+\`\`\`
+
+The program will display:
+    - The Hamming code parameters.
+    - The original message and its binary representation.
+    - The encoded message in binary.
+    - The noisy message with a single-bit error.
+    - The error syndrome calculated.
+    - The decoded message in binary and as text.
