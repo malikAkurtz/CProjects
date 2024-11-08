@@ -24,3 +24,11 @@ Use the provided Makefile to compile the program:
 
 ```bash
 make
+```
+
+## Usage
+This will create an executible with the name ./hamming, which can be run with:
+
+```bash
+./hamming
+```
