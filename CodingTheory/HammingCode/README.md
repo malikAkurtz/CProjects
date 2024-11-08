@@ -35,14 +35,25 @@ This will create an executible with the name ./hamming, which can be run with:
 
 Example Interaction:
 
+Input: Hello, World!
+
 ```plaintext 
 Enter the message to encode: Hello, World!
 ```
 
-The program will display:
-    - The Hamming code parameters.
-    - The original message and its binary representation.
-    - The encoded message in binary.
-    - The noisy message with a single-bit error.
-    - The error syndrome calculated.
-    - The decoded message in binary and as text.
+Output:
+
+```plaintext 
+This is a Hamming(111, 104) Code
+Code Rate: 0.936937
+
+Original Message: Hello, World!
+Original Message in Binary: 01001000011001010110110001101100011011110010110000100000010101110110111101110010011011000110010000100001
+
+Encoded Message in Binary:  000110001000011100101011011000101011000110111100101100001000000010101110110111101110010011011000110010000100001
+Noisy Message in Binary:    000110011000011100101011011000101011000110111100101100001000000010101110110111101110010011011000110010000100001
+
+Error Syndrome: 8
+Decoded Message in Binary:  01001000011001010110110001101100011011110010110000100000010101110110111101110010011011000110010000100001
+Decoded Message: Hello, World!
+```
