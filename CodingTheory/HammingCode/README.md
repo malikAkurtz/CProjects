@@ -35,9 +35,9 @@ This will create an executible with the name ./hamming, which can be run with:
 
 Example Interaction:
 
-\`\`\`plaintext 
+```plaintext 
 Enter the message to encode: Hello, World!
-\`\`\`
+```
 
 The program will display:
     - The Hamming code parameters.
