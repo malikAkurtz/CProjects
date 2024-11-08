@@ -1,57 +1,62 @@
 #include "utility.h"
 #include "HammingCode.h"
-#include <time.h>
-#include <string>
-#include <vector>
+#include <ctime>
 #include <iostream>
 
 int main() {
+    srand(static_cast<unsigned int>(time(0))); // Seed random number generator
 
-    srand(time(0)); // Seed with the current time
-
+    // Read message from standard input
     std::string message;
+    std::cout << "Enter the message to encode: ";
     std::getline(std::cin, message);
-    std::vector<bool> asVecBool = stringToVecBool(message);
-    //asVecBool = {1,0,1,0};
 
-    int k = asVecBool.size();               // Total # of Data Bits
-    int r = calculateNumberParityBits(k);   // Total # of Redundant Bits
-    int n = k+r;                            // Total # of Bits
+    // Convert message to vector of booleans
+    std::vector<bool> dataBits = stringToVecBool(message);
+    int k = dataBits.size();                    // Number of data bits
+    int r = calculateNumberParityBits(k);       // Number of parity bits
+    int n = k + r;                              // Total number of bits after encoding
+    double codeRate = static_cast<double>(k) / n;
 
-    double codeRate = (double) k / n;       // The ratio of Data Bits to Total Bits (Higher = Better)
+    // Display code parameters
+    std::cout << "\nThis is a Hamming(" << n << ", " << k << ") Code";
+    std::cout << "\nCode Rate: " << codeRate << "\n";
 
-    printf("This is a Hamming(%d, %d) Code\n", n, k);
-    printf("The Code Rate is: %f\n", codeRate);
+    // Display original message in binary
+    std::cout << "\nOriginal Message: " << message;
+    std::cout << "\nOriginal Message in Binary: ";
+    for (bool bit : dataBits) {
+        std::cout << bit;
+    }
 
-    std::cout << "Original Message: " << message << std::endl;
-    std::cout << "Original Message in Binary: ";
-    for (bool b : asVecBool) {
-        std::cout << b;
-    } std::cout << std::endl;
+    // Encode the data bits
+    std::vector<bool> encodedMessage = encode(dataBits, n);
+    std::cout << "\n\nEncoded Message in Binary:  ";
+    for (bool bit : encodedMessage) {
+        std::cout << bit;
+    }
 
+    // Introduce a single-bit error
+    std::vector<bool> noisyMessage = flipBit(encodedMessage);
+    std::cout << "\nNoisy Message in Binary:    ";
+    for (bool bit : noisyMessage) {
+        std::cout << bit;
+    }
 
-    std::vector<bool> encoded = encode(asVecBool, n);
-    std::cout << "Encoded Message in Binary:  ";
-    for (bool b : encoded) {
-       std::cout << b;
-    } std::cout << std::endl;
-    
+    // Calculate error syndrome and decode
+    int errorSyndrome = calculateErrorSyndrome(noisyMessage);
+    std::vector<bool> decodedMessage = decode(noisyMessage, errorSyndrome);
+    std::cout << "\n\nError Syndrome: " << errorSyndrome;
 
-    std::vector<bool> noisy_encoded = flipBit(encoded);
-    std::cout << "Noisy Message in Binary:    ";
-    for (bool b : noisy_encoded) {
-        std::cout << b;
-    } std::cout << std::endl;
+    // Display decoded message in binary
+    std::cout << "\nDecoded Message in Binary:  ";
+    for (bool bit : decodedMessage) {
+        std::cout << bit;
+    }
 
-    int errorSyndrome = calculateErrorSyndrome(noisy_encoded);
-    std::vector<bool> decoded = decode(noisy_encoded, errorSyndrome);
-    std::cout << "Decoded Message in Binary:  ";
-    for (bool b : decoded) {
-        std::cout << b;
-    } std::cout << std::endl;
-
-    std::cout << "Decoded Message: " << vecBoolToString(decoded);
-    
+    // Convert decoded bits back to string
+    std::string decodedString = vecBoolToString(decodedMessage);
+    std::cout << "\nDecoded Message: " << decodedString << "\n";
 
     return 0;
 }

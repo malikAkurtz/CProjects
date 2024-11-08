@@ -1,14 +1,10 @@
-#include <iostream>
-#include <stdio.h>
 #include <vector>
-#include <string>
-#include <bitset>
-#include <cstdlib>
-#include <time.h>
-#include <cmath>
 
 
-std::vector<bool> encode(std::vector<bool> input, int totalBits) {
+/**
+ * Encodes the input data bits into a Hamming code.
+ */
+std::vector<bool> encode(const std::vector<bool>& input, int totalBits) {
 
     //initialize a vector that will hold our data bits plus our redundant bits
     std::vector<bool> toReturn(totalBits);
@@ -46,8 +42,10 @@ std::vector<bool> encode(std::vector<bool> input, int totalBits) {
 }
 
 
-
-int calculateErrorSyndrome(std::vector<bool> noisy_encoded) {
+/**
+ * Calculates the error syndrome of a received Hamming code.
+ */
+int calculateErrorSyndrome(const std::vector<bool>& noisy_encoded) {
     std::vector<bool> correctEncoding = noisy_encoded;
 
     std::vector<bool> decoded = {};
@@ -71,7 +69,11 @@ int calculateErrorSyndrome(std::vector<bool> noisy_encoded) {
     return errorSyndrome;
 }
 
-std::vector<bool> decode(std::vector<bool> noisy_encoded, int error_syndrome) {
+
+/**
+ * Decodes the received Hamming code, correcting any single-bit errors.
+ */
+std::vector<bool> decode(const std::vector<bool>& noisy_encoded, int error_syndrome) {
 
     std::vector<bool> decoded = {};
     std::vector<bool> correctEncoding = noisy_encoded;

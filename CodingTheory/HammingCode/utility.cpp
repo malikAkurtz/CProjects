@@ -1,11 +1,12 @@
 #include "utility.h"
 #include <vector>
-#include <string>
 #include <bitset>
-#include <cstdlib>
 
 
-std::vector<bool> stringToVecBool(std::string code) {
+/**
+ * Converts a string into a vector of booleans representing its binary form.
+ */
+std::vector<bool> stringToVecBool(const std::string& code) {
 
     std::vector<bool> toReturn = {};
 
@@ -24,7 +25,10 @@ std::vector<bool> stringToVecBool(std::string code) {
 }
 
 
-std::string vecBoolToString(std::vector<bool> vector_code) {
+/**
+ * Converts a vector of booleans into its corresponding string.
+ */
+std::string vecBoolToString(const std::vector<bool>& vector_code) {
     std::string toReturn = "";
 
     char c = 0;
@@ -40,7 +44,10 @@ std::string vecBoolToString(std::vector<bool> vector_code) {
 }
 
 
-std::vector<bool> flipBit(std::vector<bool> encoded) {
+/**
+ * Introduces a single-bit error by flipping a random bit in the encoded vector.
+ */
+std::vector<bool> flipBit(std::vector<bool>& encoded) {
     int min = 0;
     int max = encoded.size() - 1;
     int random_num = min + rand() % (max - min + 1);
@@ -51,6 +58,9 @@ std::vector<bool> flipBit(std::vector<bool> encoded) {
 }
 
 
+/**
+ * Calculates the number of parity bits required for the given number of data bits.
+ */
 int calculateNumberParityBits(int numDataBits) {
     int r = 0;
     while (!((1 << r) >= (numDataBits + r + 1))) {
